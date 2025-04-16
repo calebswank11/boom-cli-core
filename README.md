@@ -5,6 +5,9 @@
 
 Ideal for solo founders, internal tools, MVPs, and anyone who wants to skip the boilerplate and ship faster.
 
+##### Playground
+https://www.boomscaffold.com/playground/
+
 ---
 
 ## 🚀 What It Does
@@ -169,14 +172,6 @@ Add your DB secrets, hook up the logic, and go 💥
     
 - 🎨 **Tailwind UI + hooks** generated from models
     
-- 🧪 **Toggleable test output**
-    
-- 🔐 **JWT auth, rate limiting, versioning**
-    
-- ☁️ **AWS CDK support**
-    
-- 🔄 **CI/CD with GitHub Actions + Docker**
-    
 
 ---
 
@@ -203,21 +198,6 @@ Add your DB secrets, hook up the logic, and go 💥
 
 ---
 
-## 🧩 Optional Add-ons (Coming Soon)
-
-- 🔧 REST API output
-    
-- 🧱 Admin CRUD dashboards
-    
-- 📘 Auto-generated API docs
-    
-- 🧪 Storybook / UI preview environment
-    
-- 🧮 Visual DB designer
-    
-
----
-
 ## 📌 Use Cases
 
 BOOM!Scaffold is perfect for:
@@ -235,6 +215,28 @@ BOOM!Scaffold is perfect for:
 
 ---
 
-## 💬 Feedback / Roadmap
+## 🚧 Roadmap
+| Feature                                    | Purpose                                                  |
+| ------------------------------------------ | -------------------------------------------------------- |
+| 🔧 **REST API output**                     | Generate REST endpoints alongside GraphQL                |
+| 🔄 **Inline rescaffolding**                | Detect schema changes and update files non-destructively |
+| 🔐 **JWT auth, rate limiting, versioning** | Add production-ready security out of the box             |
+| 🧠 **Ollama integration**                  | Natural-language prompts to generate scaffold features   |
+| 🧱 **Admin CRUD dashboards**               | Auto-generate admin panels tied to schema                |
+| 🧮 **AI DB Designer**                      | Visual schema builder with config export                 |
+| 💻 **Toggleable test output**              | Optional test file scaffolding with Jest or other libs   |
+| ☁️ **AWS CDK / Terraform / Pulumi**        | Scaffold infrastructure as code                          |
+| 🔄 **CI/CD + Docker + GitHub Actions**     | Generate deployment and container setup                  |
+| 📘 **Auto-generated API docs**             | Create OpenAPI or GraphQL schema docs automatically      |
+| 🧭 **Frontend route generator**            | Automatically maps schema resources to frontend pages    |
+| 🧰 **Design system starter**               | Tailwind-based base components, forms, layouts           |
+| 💫 **Frontend animation presets**          | Smooth entry/exit transitions, especially for admin UIs  |
+| 🔐 **RBAC support**                        | Add field- and route-level access rules from config      |
+| 📁 **Modular plugin support**              | Eventually allow community plugin generation             |
+| ✍️ **Schema linter + formatter**           | Validate/enforce schema structure before scaffolding     |
+
+---
+## 💬 Feedback
 
 We’re building fast. If you hit something weird or want a feature, reach out or [submit feedback here](https://www.boomscaffold.com).
+
