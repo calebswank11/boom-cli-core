@@ -12,7 +12,7 @@ import {
   EnumsOrchestrator,
   FrontendOrchestrator,
 } from './_starters';
-import { logBreak, logFinish, logLogo } from './utils/logs';
+import { logBreak, logBSInfo, logFinish, logLogo } from './utils/logs';
 
 dotenv.config();
 
@@ -56,10 +56,9 @@ export const boomScaffold = async (config: ScaffoldingConfig) => {
       console.timeEnd('B!S completion time');
     }
     logBreak();
-    logLogo(true);
+    logBSInfo();
     logBreak();
     logFinish();
-
     // NOTE delete existing files for cleanup?
   } catch (error) {
     console.error('');

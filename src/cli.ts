@@ -2,6 +2,9 @@
 import { Command } from 'commander';
 import runBoomCLI from './runner';
 import { ApiTypes, CLIOptionsRoot, ORMs } from './@types';
+import { logBSInfo } from './utils/logs';
+
+logBSInfo();
 
 const program = new Command();
 

@@ -24,7 +24,61 @@ All in under 60 seconds.
 
 ---
 
-## 📥 Input: `scaffold.config.json`
+## 🧪 Quickstart
+
+### Install (coming soon via npm):
+
+```bash
+npm install -g @boom/cli
+```
+
+Or, if you’re cloning locally:
+
+```bash
+git clone https://github.com/calebswank11/boom-cli-core.git
+cd boom-cli-core
+yarn && yarn build
+```
+
+---
+### Run the Scaffold:
+
+Make sure you have a SQL schema in `./sqlInput/` and a `scaffold.config.json` at root.
+
+Then generate your fullstack scaffold:
+
+```bash
+boom init
+```
+
+You’ll see:
+
+```bash
+   ___   ___ __
+  / _ ) / // __)
+ / _ < /_/\__\
+/____/(_)(___/
+
+BOOM!Scaffold
+```
+
+---
+
+### Example Input:
+
+**`./sqlInput/example.sql`**
+
+```sql
+CREATE TABLE user (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  role ENUM('admin', 'user') DEFAULT 'user'
+);
+```
+
+
+### Input: `scaffold.config.json`
 
 The CLI takes a single config file that drives your entire scaffold.
 
@@ -64,7 +118,7 @@ The CLI takes a single config file that drives your entire scaffold.
 ```
 build/
 ├── enums/           # Auto-generated enums
-├── migrations/      # Knex migration files
+├── migrations/      # migration files
 ├── seeds/           # Seed data
 ├── src/
 │   ├── @types/      # Global TS types
@@ -86,10 +140,20 @@ build/
 app/
 ├── api/             # Query/mutation clients
 ├── config/ui/       # Tailwind UI config
-├── hooks/           # Auto-generated React/Solid hooks
+├── hooks/           # Auto-generated React/Solid/Svelte/Vue hooks
 ├── store/           # Global state
 └── pages/           # Optional routing structure
 ```
+
+---
+
+### Next Up:
+
+```bash
+cd build && yarn && yarn dev
+```
+
+Add your DB secrets, hook up the logic, and go 💥
 
 ---
 
