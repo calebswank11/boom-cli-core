@@ -37,11 +37,13 @@ Or, if you’re cloning locally:
 ```bash
 git clone https://github.com/calebswank11/boom-cli-core.git
 cd boom-cli-core
-yarn && yarn build
+yarn && npx ts-node src/build.ts
 ```
 
+This will run BOOM!Scaffold. If it errors, make sure you have a SQL schema in `./sqlInput/` and a `scaffold.config.json` at root.
+
 ---
-### Run the Scaffold:
+### Run the Scaffold (CLI):
 
 Make sure you have a SQL schema in `./sqlInput/` and a `scaffold.config.json` at root.
 

@@ -235,7 +235,7 @@ export class DataRegistry {
   // Debugging helper
   logDataRegistry() {
     if (process.env.NODE_ENV !== 'production') {
-      pp(this.structure);
+      console.log(this.structure);
     }
   }
 }

@@ -8,12 +8,7 @@
   "author": "",
   "license": "MIT",
   "scripts": {
-    "dev": "yarn tsc && chmod +x dist/cli.js && node dist/cli.js",
-    "obfuscate": "yarn build && javascript-obfuscator ./dist/cli --output ./lib --config ./obfuscator.config.json",
-    "prepublishOnly": "yarn build && node ./scripts/swapBinToObfuscated.js",
-    "buildPlaygroundLambda": "tsc -p tsconfig.playgroundLambda.json",
-    "build": "node esbuild.js development",
-    "devPlayground": "NODE_ENV=development && serverless offline"
+    "dev": "yarn tsc && chmod +x dist/cli.js && node dist/cli.js"
   },
   "dependencies": {
     "@types/inquirer": "^9.0.7",
