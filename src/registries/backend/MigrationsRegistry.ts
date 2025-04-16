@@ -1,0 +1,79 @@
+import fs from 'fs';
+import { MigrationsRegistryBase } from '../../@types';
+import { FileCreator } from '../../controllers/directoryTools/FileCreator';
+import { ConfigRegistry } from '../ConfigRegistry';
+import { migrationsTemplate } from '../../templates/migrations/migration';
+import path from 'path';
+
+export class MigrationsRegistry extends ConfigRegistry {
+  private static instance: MigrationsRegistry;
+  private migrations: MigrationsRegistryBase[];
+  private MIGRATIONS_PATH: string;
+
+  private constructor() {
+    super();
+    this.migrations = this.loadFromFile() || this.defaultMigrations();
+    this.MIGRATIONS_PATH =
+      this.getRegistryDataPath('MIGRATIONS_REGISTRY_PATH') || './migrations.json';
+  }
+
+  static getInstance(): MigrationsRegistry {
+    if (!MigrationsRegistry.instance) {
+      MigrationsRegistry.instance = new MigrationsRegistry();
+    }
+    return MigrationsRegistry.instance;
+  }
+
+  private loadFromFile(): MigrationsRegistryBase[] | null {
+    if (fs.existsSync(this.MIGRATIONS_PATH)) {
+      try {
+        return JSON.parse(fs.readFileSync(this.MIGRATIONS_PATH, 'utf-8'));
+      } catch (error) {
+        console.error('Error loading migrations file:', error);
+      }
+    }
+    return null;
+  }
+
+  private defaultMigrations(): MigrationsRegistryBase[] {
+    return [];
+  }
+
+  getMigrations(): MigrationsRegistryBase[] {
+    return this.migrations;
+  }
+
+  createBaseMigrations(migrations: MigrationsRegistryBase[]) {
+    this.migrations = migrations;
+    this.saveToFile();
+  }
+
+  updateMigrations(updates: MigrationsRegistryBase[]) {
+    this.migrations = [...this.migrations, ...updates];
+    this.saveToFile();
+  }
+
+  private saveToFile() {
+    fs.writeFileSync(this.MIGRATIONS_PATH, JSON.stringify(this.migrations, null, 2));
+  }
+
+  async createMigrations(filePath: string) {
+    const fileCreator = new FileCreator();
+    const config = this.getConfig();
+    if (config.outputs.api.migrations.active) {
+      await fileCreator.createFiles(
+        this.getMigrations().map(({ name, migrations }) => ({
+          content: migrationsTemplate({
+            ...migrations,
+            enumPath: '../enums',
+          }),
+          path: path.join(filePath, name.replace(/.sql/g, '.ts')),
+        })),
+      );
+      console.log('-------------------------------');
+      console.log(`✅ Migrations created at ${filePath}`);
+    } else {
+      console.log('⚠️ Migrations not included, update config to build them');
+    }
+  }
+}

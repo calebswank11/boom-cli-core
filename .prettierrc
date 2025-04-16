@@ -1,0 +1,9 @@
+useTabs: false
+printWidth: 85
+tabWidth: 2
+singleQuote: true
+trailingComma: 'all'
+semi: true
+bracketSpacing: true
+# // eslint should catch all of these.
+organizeImportsSkipDestructiveCodeActions: true
