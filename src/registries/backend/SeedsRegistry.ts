@@ -4,6 +4,7 @@ import { ConfigRegistry } from '../ConfigRegistry';
 import { FileCreator } from '../../controllers/directoryTools/FileCreator';
 import { seedTemplate } from '../../templates/seeds/seed';
 import path from 'path';
+import { logSectionHeader, logSectionHeaderError } from '../../utils/logs';
 
 export class SeedsRegistry extends ConfigRegistry {
   private static instance: SeedsRegistry;
@@ -67,10 +68,9 @@ export class SeedsRegistry extends ConfigRegistry {
           path: path.join(filePath, name.replace(/.sql/g, '.ts')),
         })),
       );
-      console.log('-------------------------------');
-      console.log(`✅ Seeds created at ${filePath}`);
+      logSectionHeader(`✅ Seeds created at ${filePath}`);
     } else {
-      console.log('⚠️ Seeds not included, update config to build them');
+      logSectionHeaderError('⚠️ Seeds not included, update config to build them');
     }
   }
 }

@@ -4,6 +4,7 @@ import { FileCreator } from '../../controllers/directoryTools/FileCreator';
 import { ConfigRegistry } from '../ConfigRegistry';
 import { migrationsTemplate } from '../../templates/migrations/migration';
 import path from 'path';
+import { logSectionHeader, logSectionHeaderError } from '../../utils/logs';
 
 export class MigrationsRegistry extends ConfigRegistry {
   private static instance: MigrationsRegistry;
@@ -70,10 +71,9 @@ export class MigrationsRegistry extends ConfigRegistry {
           path: path.join(filePath, name.replace(/.sql/g, '.ts')),
         })),
       );
-      console.log('-------------------------------');
-      console.log(`✅ Migrations created at ${filePath}`);
+      logSectionHeader(`✅ Migrations created at ${filePath}`);
     } else {
-      console.log('⚠️ Migrations not included, update config to build them');
+      logSectionHeaderError('⚠️ Migrations not included, update config to build them');
     }
   }
 }

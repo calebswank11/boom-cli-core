@@ -9,6 +9,7 @@ import { ComponentBuilder } from '../../builders/frontend/components/ComponentBu
 import { FileCreator } from '../../controllers/directoryTools/FileCreator';
 import path from 'path';
 import { FolderCreator } from '../../controllers/directoryTools/FolderCreator';
+import { logSectionHeader } from '../../utils/logs';
 
 const dataRegistry = DataRegistry.getInstance();
 
@@ -138,10 +139,10 @@ export class FrontendOrchestrator extends OrchestratorHelpers {
   }
 
   async scaffold() {
-    console.log('🎉 Beginning Frontend Scaffold');
+    logSectionHeader('🎉 Beginning Frontend Scaffold');
     await this.orchestrateAPIMaps();
     await this.orchestrateAPIHooks();
     await this.orchestrateComponents();
-    console.log('✅ 💾 Frontend Scaffold Complete');
+    logSectionHeader('✅ 💾 Frontend Scaffold Complete');
   }
 }

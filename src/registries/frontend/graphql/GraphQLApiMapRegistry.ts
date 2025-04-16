@@ -4,6 +4,7 @@ import { ApiMapMapBase } from '../../../@types';
 import { FileCreator } from '../../../controllers/directoryTools/FileCreator';
 import { FolderCreator } from '../../../controllers/directoryTools/FolderCreator';
 import path from 'path';
+import { logSectionHeader, logSectionHeaderError } from '../../../utils/logs';
 
 export class GraphQLApiMapRegistry extends ConfigRegistry {
   private static instance: GraphQLApiMapRegistry;
@@ -77,7 +78,7 @@ export class GraphQLApiMapRegistry extends ConfigRegistry {
       );
     } else {
       if (config.library === 'apollo-server') {
-        console.log(
+        logSectionHeaderError(
           '⚠️ Frontend GraphQL objects are not included in the config, skipping creation.',
         );
       }
@@ -95,9 +96,10 @@ export class GraphQLApiMapRegistry extends ConfigRegistry {
           content: apiMap.template,
         })),
       );
+      logSectionHeader('🔮 Graphql API Object Maps created')
     } else {
       if (config)
-        console.log(
+        logSectionHeaderError(
           '⚠️ API Object types not included, update config to build them!',
         );
     }

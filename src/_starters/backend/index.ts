@@ -26,6 +26,7 @@ import { buildAndCreateServer } from '../../controllers/directoryTools/baseProje
 import { DataRegistry } from '../../registries/DataRegistry';
 import { EndpointBuilder } from '../../builders/endpoints/EndpointBuilder';
 import { DataServiceBuilder } from '../../builders/dataServices/DataServiceBuilder';
+import { logSectionHeader } from '../../utils/logs';
 
 const dataRegistry = DataRegistry.getInstance();
 
@@ -166,7 +167,7 @@ export class BackendOrchestrator extends OrchestratorHelpers {
   }
 
   async scaffold() {
-    console.log('🎉 Beginning API Scaffold');
+    logSectionHeader('🎉 Beginning API Scaffold');
     await this.orchestrateSeeds();
     await this.orchestrateMigrations();
     await this.orchestrateAPIS();
@@ -177,6 +178,6 @@ export class BackendOrchestrator extends OrchestratorHelpers {
     await this.orchestrateTypescript();
     // NOTE: ^^ Put later because random types will be added for args, dataservices, etc.
     await this.orchestrateFoundation();
-    console.log('✅ 💾 API Scaffold Complete');
+    logSectionHeader('✅ 💾 API Scaffold Complete');
   }
 }

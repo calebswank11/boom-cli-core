@@ -6,6 +6,7 @@ import path from 'path';
 import { FileCreator } from '../../controllers/directoryTools/FileCreator';
 import { FolderCreator } from '../../controllers/directoryTools/FolderCreator';
 import { graphqlTemplate } from '../../templates/models/graphql';
+import { logSectionHeader, logSectionHeaderError } from '../../utils/logs';
 
 export class TypedefsRegistry extends ConfigRegistry {
   private static instance: TypedefsRegistry;
@@ -80,7 +81,7 @@ export class TypedefsRegistry extends ConfigRegistry {
           }),
         );
       } else {
-        console.log('apis not included, update config to build them');
+        console.log('typescript not included, update config to build them');
       }
     }
   }
@@ -114,10 +115,9 @@ export class TypedefsRegistry extends ConfigRegistry {
           path.join(filePath, 'index.ts'),
           folderNames.map((folder) => `export * from './${folder}';`).join('\n'),
         );
-        console.log('-------------------------------');
-        console.log(`✅ Typedefs created at ${filePath}`);
+        logSectionHeader(`✅ Typedefs created at ${filePath}`);
       } else {
-        console.log('⚠️ Typedefs not included, update config to build them!');
+        logSectionHeaderError('⚠️ Typedefs not included, update config to build them!');
       }
     }
   }

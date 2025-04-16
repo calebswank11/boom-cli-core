@@ -4,6 +4,7 @@ import { FileCreator } from '../../controllers/directoryTools/FileCreator';
 import { ConfigRegistry } from '../ConfigRegistry';
 import path from 'path';
 import { FolderCreator } from '../../controllers/directoryTools/FolderCreator';
+import { logSectionHeader, logSectionHeaderError } from '../../utils/logs';
 
 export class ApisRegistry extends ConfigRegistry {
   private static instance: ApisRegistry;
@@ -79,51 +80,9 @@ export class ApisRegistry extends ConfigRegistry {
         })),
       );
 
-      // create subFolders,
-      // create apis
-      // simpler.
-
-      // const apisByFolder = mapItemToFolder(categorizedFolders, this.getApis());
-      //
-      // const folders = Object.keys(apisByFolder);
-      //
-      // const fetchSubFolder = config.apiType === 'graphql' ? 'queries' : '';
-      // const writeSubFolder = config.apiType === 'graphql' ? 'mutations' : '';
-      //
-      // // create Fetch subfolders, largely used for gql
-      // // if raw express/nest, the first will create and the second will just process without creating
-      // await folderCreator.createFolders(
-      //   folders.map((folder) => path.join(filePath, fetchSubFolder, folder)),
-      // );
-      // await folderCreator.createFolders(
-      //   folders.map((folder) => path.join(filePath, writeSubFolder, folder)),
-      // );
-      //
-      // const endpointBuilder = new EndpointBuilder();
-      // for (const folder of folders) {
-      //   // api for specific folder.
-      //   const endpoints = endpointBuilder.buildEndpointsTemplate(
-      //     folder,
-      //     apisByFolder[folder],
-      //   );
-      //
-      //   if (!endpoints) {
-      //     // no endpoints, uiLibrary not supported
-      //     return;
-      //   }
-      //
-      //   for (const endpoint of endpoints) {
-      //     await fileCreator.createFile(
-      //       path.join(config.root, config.outputs.api.apis.folder, endpoint.path),
-      //       endpoint.template,
-      //     );
-      //   }
-      // }
-
-      console.log('-------------------------------');
-      console.log(`✅ APIs created at ${filePath}`);
+      logSectionHeader(`✅ APIs created at ${filePath}`);
     } else {
-      console.log('⚠️ APIS not included, update config to build them');
+      logSectionHeaderError('⚠️ APIS not included, update config to build them');
     }
   }
 

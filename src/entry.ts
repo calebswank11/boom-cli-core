@@ -12,14 +12,15 @@ import {
   EnumsOrchestrator,
   FrontendOrchestrator,
 } from './_starters';
+import { logBreak, logFinish, logLogo } from './utils/logs';
 
 dotenv.config();
 
 const configRegistry = ConfigRegistry.getConfigInstance();
 
 export const boomScaffold = async (config: ScaffoldingConfig) => {
-  const ctx = {};
   try {
+    logLogo();
     if (process.env.NODE_ENV !== 'production') {
       console.time('B!S completion time');
     }
@@ -49,10 +50,15 @@ export const boomScaffold = async (config: ScaffoldingConfig) => {
     await frontendOrchestrator.scaffold();
     await cicdOrchestrator.scaffold();
     await cloudOpsOrchestrator.scaffold();
-
+    logBreak();
+    logBreak();
     if (process.env.NODE_ENV !== 'production') {
       console.timeEnd('B!S completion time');
     }
+    logBreak();
+    logLogo(true);
+    logBreak();
+    logFinish();
 
     // NOTE delete existing files for cleanup?
   } catch (error) {

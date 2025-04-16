@@ -4,6 +4,7 @@ import { FileCreator } from '../../controllers/directoryTools/FileCreator';
 import { FolderCreator } from '../../controllers/directoryTools/FolderCreator';
 import path from 'path';
 import { DataServicesBase, TemplateToBuild } from '../../@types';
+import { logSectionHeader, logSectionHeaderError } from '../../utils/logs';
 
 const cleanupTypes = (prevContent: string, newContent: string) => {
   // 🛠 Split content into separate type/interface blocks
@@ -107,7 +108,7 @@ export class DataServicesRegistry extends ConfigRegistry {
           }),
         );
       } else {
-        console.log('apis not included, update config to build them');
+        logSectionHeaderError('apis not included, update config to build them');
       }
     }
   }
@@ -115,13 +116,6 @@ export class DataServicesRegistry extends ConfigRegistry {
   async createDataServices(templates: TemplateToBuild[]) {
     const fileCreator = new FileCreator();
     const config = this.getConfig();
-    // const categorizedFolders = this.getCategorizedFolders();
-    // const dataServiceBuilder = new DataServiceBuilder();
-    // if (!categorizedFolders) {
-    //   throw new Error(
-    //     'Folders not available, please create folders prior to building dataServices',
-    //   );
-    // } else {
     if (config.outputs.api.helperFunctions.active) {
       await fileCreator.createFiles(
         templates.map((template) => ({
@@ -129,25 +123,10 @@ export class DataServicesRegistry extends ConfigRegistry {
           path: template.path,
         })),
       );
-      // create root @types/dataServices folder
-      // const typesRootDir = path.join(config.root, config.outputs.types.folder);
-      // need to do this inside the api orchestrator
 
-      // await folderCreator.createFolder(path.join(typesRootDir, 'dataServices'));
-
-      // create an index file for /src/@types/dataServices to be imported into the master /src/@types/index.ts list
-      // const folderNames = Object.keys(dataServicesByFolder);
-      //
-      // await fileCreator.createFile(
-      //   path.join(typesRootDir, 'dataServices', 'index.ts'),
-      //   folderNames
-      //     .map((folderName) => `export * from './${folderName}'`)
-      //     .join('\n'),
-      // );
-
-      console.log(`✅ Data Services created`);
+      logSectionHeader(`✅ Data Services created`);
     } else {
-      console.log('⚠️ Data Services not included, update config to build them!');
+      logSectionHeaderError('⚠️ Data Services not included, update config to build them!');
     }
     // }
   }
