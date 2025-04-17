@@ -11,7 +11,7 @@ export const logLogo = (withComplete?: boolean) => {
   console.log(chalk.gray(logo));
   console.log(chalk.blueBright(`BOOM!Scaffold`));
   if (withComplete) {
-    console.log(chalk.green(`Complete - v1.0.0 at ${new Date().toISOString()}`));
+    console.log(chalk.green(`Complete - v1.0.1 at ${new Date().toISOString()}`));
   }
 };
 
@@ -35,7 +35,7 @@ export const logSectionHeaderError = (content: string) => {
 export function logBSInfo() {
   const title = chalk.bold.blue('BOOM!Scaffold');
 
-  const versionText = chalk.dim(`v1.0.0 — ${new Date().toISOString()}`);
+  const versionText = chalk.dim(`v1.0.1 — ${new Date().toISOString()}`);
 
   const cta =
     chalk.gray('⭐ Like this tool? Star it:') +
