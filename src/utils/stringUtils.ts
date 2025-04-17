@@ -1,7 +1,4 @@
-import { createRequire } from 'module';
-
-const customRequire = createRequire(__filename); // ← no import.meta.url
-const prettier = customRequire('prettier');
+import prettier from 'prettier';
 
 export const sanitizeSQL = (sql: string): string => {
   return sql
