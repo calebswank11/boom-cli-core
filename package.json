@@ -51,7 +51,7 @@
     "boilerplate"
   ],
   "files": [
-    "dist/cli.js",
+    "dist",
     "README.md",
     "LICENSE"
   ],
