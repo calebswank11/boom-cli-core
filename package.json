@@ -1,7 +1,7 @@
 {
   "name": "@boomscaf/cli",
   "type": "commonjs",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "The official CLI for BOOM!Scaffold – generate fullstack apps from your schema.",
   "main": "dist/cli.js",
   "author": "",
