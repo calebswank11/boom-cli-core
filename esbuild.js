@@ -13,7 +13,6 @@ const build = async () => {
     minify: true,
     logLevel: 'info',
     treeShaking: true,
-    external: ['prettier', 'prettier-plugin-organize-imports'],
   };
 
   await esbuild
