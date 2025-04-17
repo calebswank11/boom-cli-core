@@ -8,8 +8,8 @@
   "license": "MIT",
   "scripts": {
     "build": "yarn tsc && chmod +x dist/cli.js",
-    "dev": "yarn build && node dist/cli.js",
-    "prepare": "node esbuild.js && chmod +x dist/cli.js"
+    "dev": "yarn build && node dist/cli.js init",
+    "prepare": "yarn build"
   },
   "dependencies": {
     "@types/inquirer": "^9.0.7",
