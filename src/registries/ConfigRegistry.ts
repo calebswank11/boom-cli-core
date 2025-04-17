@@ -5,6 +5,24 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { categorizeFolders } from '../utils/folderUtils';
 
+const stubbedEnv = {
+  ENUMS_REGISTRY_PATH: 'enums.json',
+  CONFIG_REGISTRY_PATH: 'scaffold.config.json',
+  APIS_REGISTRY_PATH: 'apis.json',
+  ROUTES_REGISTRY_PATH: 'routes.json',
+  TYPESCRIPT_REGISTRY_PATH: 'typescript.json',
+  DATASERVICES_REGISTRY_PATH: 'dataServices.json',
+  MIGRATIONS_REGISTRY_PATH: 'migrations.json',
+  SEED_REGISTRY_PATH: 'seeds.json',
+  TYPEDEFS_REGISTRY_PATH: 'typedefs.json',
+  CICD_REGISTRY_PATH: 'cicd.json',
+  INFRA_REGISTRY_PATH: 'infra.json',
+  DIRECTORY_REGISTRY_PATH: 'directoryRegistry.json',
+  HOOKS_REGISTRY_PATH: 'hooks.json',
+  GRAPHQL_API_MAP_REGISTRY_PATH: 'graphQLApiMaps.json',
+  PACKAGE_REGISTRY_PATH: 'package.json',
+};
+
 dotenv.config();
 export class ConfigRegistry {
   private static configInstance: ConfigRegistry;
@@ -25,8 +43,9 @@ export class ConfigRegistry {
   }
 
   getFileStoragePaths() {
+    const effectiveEnv = { ...stubbedEnv, ...process.env };
     return Object.fromEntries(
-      Object.entries(process.env)
+      Object.entries(effectiveEnv)
         .filter(([key]) => key.endsWith('_REGISTRY_PATH'))
         .map(([key, filePath]) => {
           // extensible to various envs
