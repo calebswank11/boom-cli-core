@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import runBoomCLI from './runner';
 import { ApiTypes, CLIOptionsRoot, ORMs } from './@types';
 import { logBSInfo } from './utils/logs';
+import { version } from '../package.json';
 
 logBSInfo();
 
@@ -11,7 +12,7 @@ const program = new Command();
 program
   .name('boom')
   .description('Generate backend/frontend scaffolding with BOOM!Scaffold')
-  .version('1.0.2');
+  .version(version);
 
 program
   .command('init')

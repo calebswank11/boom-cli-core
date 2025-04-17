@@ -3,13 +3,13 @@
   "type": "commonjs",
   "version": "1.0.2",
   "description": "The official CLI for BOOM!Scaffold – generate fullstack apps from your schema.",
-  "main": "dist.cli/cli.js",
+  "main": "dist/cli.js",
   "author": "",
   "license": "MIT",
   "scripts": {
     "build": "yarn tsc && chmod +x dist/cli.js",
     "dev": "yarn build && node dist/cli.js",
-    "prepare": "node esbuild.js && chmod +x dist.cli/cli.js"
+    "prepare": "node esbuild.js && chmod +x dist/cli.js"
   },
   "dependencies": {
     "@types/inquirer": "^9.0.7",
@@ -40,7 +40,7 @@
     "typescript": "^5.3.3"
   },
   "bin": {
-    "boom": "dist.cli/cli.js"
+    "boom": "dist/cli.js"
   },
   "keywords": [
     "cli",
@@ -52,7 +52,7 @@
     "boilerplate"
   ],
   "files": [
-    "dist.cli/cli.js",
+    "dist/cli.js",
     "README.md",
     "LICENSE"
   ],

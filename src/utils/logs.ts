@@ -1,5 +1,6 @@
 import boxen from 'boxen';
 import chalk from 'chalk';
+import { version } from '../../package.json';
 
 const logo = `
    ___   ___ __        
@@ -11,7 +12,9 @@ export const logLogo = (withComplete?: boolean) => {
   console.log(chalk.gray(logo));
   console.log(chalk.blueBright(`BOOM!Scaffold`));
   if (withComplete) {
-    console.log(chalk.green(`Complete - v1.0.2 at ${new Date().toISOString()}`));
+    console.log(
+      chalk.green(`Complete - v${version} at ${new Date().toISOString()}`),
+    );
   }
 };
 
@@ -35,7 +38,7 @@ export const logSectionHeaderError = (content: string) => {
 export function logBSInfo() {
   const title = chalk.bold.blue('BOOM!Scaffold');
 
-  const versionText = chalk.dim(`v1.0.2 — ${new Date().toISOString()}`);
+  const versionText = chalk.dim(`v${version} — ${new Date().toISOString()}`);
 
   const cta =
     chalk.gray('⭐ Like this tool? Star it:') +

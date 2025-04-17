@@ -5,6 +5,7 @@
     "rootDir": "./src",
     "module": "CommonJS",
     "esModuleInterop": true,
+    "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
