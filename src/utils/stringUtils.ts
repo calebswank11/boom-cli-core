@@ -87,8 +87,6 @@ export const formatCode = async (code: string, formatType?: string) => {
       tabWidth: 2,
       semi: true,
       bracketSpacing: true,
-      organizeImportsSkipDestructiveCodeActions: false,
-      plugins: ['prettier-plugin-organize-imports'],
     });
   } catch (err) {
     console.error('Prettier formatting failed:', err);

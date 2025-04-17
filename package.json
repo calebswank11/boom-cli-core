@@ -21,7 +21,6 @@
     "dotenv": "^16.4.7",
     "inquirer": "^12.5.0",
     "node-fetch": "^3.3.2",
-    "prettier-plugin-organize-imports": "^4.1.0",
     "uuid": "^11.1.0",
     "yargs": "^17.7.2"
   },
