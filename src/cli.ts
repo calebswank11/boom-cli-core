@@ -11,7 +11,7 @@ const program = new Command();
 program
   .name('boom')
   .description('Generate backend/frontend scaffolding with BOOM!Scaffold')
-  .version('1.0.3');
+  .version('1.0.2');
 
 program
   .command('init')
