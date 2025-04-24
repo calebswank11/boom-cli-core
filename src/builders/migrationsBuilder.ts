@@ -1,6 +1,7 @@
 import {
   MigrationsRegistryBase,
   ORM,
+  ORMEnum,
   SqlDataType,
   TableStructureByFile,
 } from '../@types';
@@ -25,6 +26,8 @@ export function buildMigrationsData(
   const migrationRegistryData: MigrationsRegistryBase[] = [];
   const fileNames = Object.keys(tableStructureByFile);
   const migrationFactory = MigrationFactory.getMigrationFactory(orm);
+
+  // const migrationBuilder = getMigrationBuilder();
 
   fileNames.forEach((fileName) => {
     const migrations: {
@@ -139,3 +142,14 @@ export function buildMigrationsData(
   });
   return migrationRegistryData;
 }
+
+const knexMigrationBuilder = () => {};
+
+const getMigrationBuilder = (orm: ORMEnum) => {
+  switch (orm) {
+    case ORMEnum.knex:
+    case ORMEnum.sequelize:
+    case ORMEnum.typeorm:
+    case ORMEnum.prisma:
+  }
+};

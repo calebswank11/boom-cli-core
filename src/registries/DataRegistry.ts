@@ -1,7 +1,8 @@
 import {
   APIArgument,
   APIData,
-  ClientAPIHookData, EnumData,
+  ClientAPIHookData,
+  EnumData,
   FeComponentData,
   FePageData,
   FeRouteData,
@@ -31,18 +32,38 @@ export class DataRegistry {
       enums: {},
       relationships: {
         tableToApi: {},
+        tableDependencies: {},
+        tableRelationships: {},
         apiToTable: {},
         apiToTypes: {},
         typeToApis: {},
         feApiMapsToApis: {},
         hookToApis: {},
+        componentComposition: {},
       },
       frontend: {
         components: {},
         apiHooks: {},
         pages: {},
         routes: {},
+        forms: {},
+        layouts: {},
+        theme: {
+          colors: {},
+          typography: {
+            fontFamilies: {},
+            fontSizes: {},
+          },
+          spacing: {},
+          breakpoints: {},
+          components: {},
+        },
+        navigation: {
+          menus: {},
+        },
       },
+      testing: {},
+      documentation: {},
     };
   }
 
@@ -137,7 +158,7 @@ export class DataRegistry {
   }
 
   getEnumValuesByNames(enumNames: string[]): EnumData[] | null {
-    return enumNames.map(enumName => this.structure.enums[enumName]) || null;
+    return enumNames.map((enumName) => this.structure.enums[enumName]) || null;
   }
 
   getTableToApiRelationship(tableName: string): string[] | null {

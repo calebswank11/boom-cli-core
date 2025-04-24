@@ -15,6 +15,7 @@ import {
 } from '../../builders';
 import {
   BuildDataServicesPayload,
+  ORMEnum,
   ScaffoldingConfig,
   TableStructureByFile,
 } from '../../@types';
@@ -63,10 +64,12 @@ export class BackendOrchestrator extends OrchestratorHelpers {
     );
     typescriptRegistry.createBaseTypescript(typescriptBase);
     await typescriptRegistry.createTypescript(`${typescriptParentFolder}/index.ts`);
-    await typescriptRegistry.createORMTypes(
-      `${this.fileTree.types.root}/tables/_knex.d.ts`,
-      ormTypes,
-    );
+    if (this.config.orm === ORMEnum.knex) {
+      await typescriptRegistry.createORMTypes(
+        `${this.fileTree.types.root}/tables/_knex.d.ts`,
+        ormTypes,
+      );
+    }
   }
 
   private async orchestrateAPIS() {
@@ -77,8 +80,26 @@ export class BackendOrchestrator extends OrchestratorHelpers {
       ...new Set(Object.values(dataRegistry.getAllApiToTableRelationships())),
     ];
 
-    await apiRegistry.createAPIFolders(this.fileTree.api.apis.mutation, apiFolders);
-    await apiRegistry.createAPIFolders(this.fileTree.api.apis.query, apiFolders);
+    if (this.config.apiType === 'graphql') {
+      await apiRegistry.createAPIFolders(
+        this.fileTree.api.apis.mutation!,
+        apiFolders,
+      );
+      await apiRegistry.createAPIFolders(this.fileTree.api.apis.query!, apiFolders);
+    } else {
+      // create api's // controllers
+      await apiRegistry.createAPIFolders(this.fileTree.api.apis.root!, apiFolders);
+      // create routes
+      await apiRegistry.createAPIFolders(
+        this.fileTree.api.routes!.root!,
+        apiFolders,
+      );
+      // create models
+      await apiRegistry.createAPIFolders(
+        this.fileTree.api.models!.root!,
+        apiFolders,
+      );
+    }
 
     const endpointBuilder = new EndpointBuilder();
 
@@ -93,7 +114,7 @@ export class BackendOrchestrator extends OrchestratorHelpers {
       return;
     }
 
-    await apiRegistry.createAPIs(this.fileTree.api.apis.root, endpointTemplates);
+    await apiRegistry.createAPIs(this.fileTree.api.apis.root!, endpointTemplates);
   }
 
   private async orchestrateRoutes() {
@@ -105,10 +126,13 @@ export class BackendOrchestrator extends OrchestratorHelpers {
     const routesData = routeFactory.buildRoutes(dataRegistry);
     routeRegistry.saveRoutes(routesData);
     const routes = routeFactory.getRoutesByFolder(routesData);
-    await routeRegistry.createBaseRoutes(this.getFileTree().api.apis.root, routes);
+    await routeRegistry.createBaseRoutes(this.getFileTree().api.apis.root!, routes);
   }
 
   private async orchestrateTypedefs() {
+    if (this.config.apiType !== 'graphql') {
+      return;
+    }
     const typedefRegistry = TypedefsRegistry.getInstance();
     const typedefs = buildTypedefs(this.tables);
     // create nested apiType folders by category
@@ -116,8 +140,8 @@ export class BackendOrchestrator extends OrchestratorHelpers {
       typedefRegistry.setCategorizedFolders(this.tableNames);
     }
     typedefRegistry.createBaseTypedefs(typedefs);
-    await typedefRegistry.createTypedefsFolders(this.fileTree.api.typedefs.root);
-    await typedefRegistry.createTypedefs(this.fileTree.api.typedefs.root);
+    await typedefRegistry.createTypedefsFolders(this.fileTree.api.typedefs!.root);
+    await typedefRegistry.createTypedefs(this.fileTree.api.typedefs!.root);
   }
 
   private async orchestrateDataServices() {

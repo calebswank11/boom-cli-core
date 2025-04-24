@@ -89,6 +89,7 @@ export class DataOrchestrator extends OrchestratorHelpers {
     this.extractTypescript();
     this.extractApis();
     this.extractEnums();
+    // Client Extractors
     this.extractClientApiHooks();
   }
 }

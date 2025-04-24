@@ -1,59 +1,99 @@
-import { SqlDataType, TypescriptValue } from '../../@types';
+import {
+  SqlDataType,
+  TableColumnStructureBase,
+  TypescriptValue,
+} from '../../@types';
 import { camelToPascal } from '../../utils/stringUtils';
 
-const baseStringTypescript = (colName: string, required: boolean) => ({
-  name: colName,
+const baseStringTypescript = ({
+  name,
+  isRequired,
+  validationRules,
+}: TableColumnStructureBase): TypescriptValue => ({
+  name,
   value: 'string',
-  required,
+  required: isRequired,
   graphqlFEType: 'String',
   graphqlBEType: 'GraphQLString',
   nestJSParam: '@IsString',
+  description: '// string',
+  example: 'string',
+  validationRules,
 });
-const baseIntTypescript = (colName: string, required: boolean) => ({
-  name: colName,
+const baseIntTypescript = ({
+  name,
+  isRequired,
+  validationRules,
+}: TableColumnStructureBase): TypescriptValue => ({
+  name,
   value: 'number',
-  required,
+  required: isRequired,
   graphqlFEType: 'Int',
   graphqlBEType: 'GraphQLInt',
   nestJSParam: '@IsNumber',
+  description: '// number',
+  example: '123',
+  validationRules,
 });
 
-const baseBooleanTypescript = (colName: string, required: boolean) => ({
-  name: colName,
+const baseBooleanTypescript = ({
+  name,
+  isRequired,
+  validationRules,
+}: TableColumnStructureBase): TypescriptValue => ({
+  name: name,
   value: 'boolean',
-  required,
+  required: isRequired,
   graphqlFEType: 'Boolean',
   graphqlBEType: 'GraphQLBoolean',
   nestJSParam: '@IsBoolean',
+  description: '// boolean',
+  example: 'false',
+  validationRules,
 });
 
-const baseEnumTypescript = (
-  colName: string,
-  required: boolean,
-  enumDictName: string = 'EnumNotFound',
-): TypescriptValue => ({
-  name: colName,
-  value: enumDictName,
-  required,
-  // not sure if these need to differ
-  graphqlFEType: `${camelToPascal(enumDictName)}EnumType`,
-  graphqlBEType: `${camelToPascal(enumDictName)}EnumType`,
-  nestJSParam: '@IsEnum',
-  enumResponse: `(typeof ${enumDictName})[keyof typeof ${enumDictName}]`,
-});
+const baseEnumTypescript = ({
+  name,
+  isRequired,
+  type,
+  validationRules,
+  enumValues,
+}: TableColumnStructureBase): TypescriptValue => {
+  const enumDictName = type.enumDictName || 'EnumNotFound';
+  return {
+    name,
+    value: enumDictName,
+    required: isRequired,
+    // not sure if these need to differ
+    graphqlFEType: `${camelToPascal(enumDictName)}EnumType`,
+    graphqlBEType: `${camelToPascal(enumDictName)}EnumType`,
+    nestJSParam: '@IsEnum',
+    enumResponse: `(typeof ${enumDictName})[keyof typeof ${enumDictName}]`,
+    description: `// one of ${(enumValues || []).join(' | ')}`,
+    example: (enumValues || ['EnumNotFound'])[0],
+    validationRules,
+  };
+};
 
-const baseFloatTypescript = (colName: string, required: boolean) => ({
-  name: colName,
+const baseFloatTypescript = ({
+  name,
+  isRequired,
+  validationRules,
+}: TableColumnStructureBase): TypescriptValue => ({
+  name,
   value: 'number',
-  required,
+  required: isRequired,
   graphqlFEType: 'Float',
   graphqlBEType: 'GraphQLFloat',
   nestJSParam: '@IsNumber',
+  description: '// float as a number',
+  example: '1.02',
+  validationRules,
 });
 
 export const typescriptTypeParsers: Record<
   string,
-  (colName: string, required: boolean, enumDictName?: string) => TypescriptValue
+  (tableColumn: TableColumnStructureBase) => TypescriptValue
 > = {
   [SqlDataType.VARCHAR]: baseStringTypescript,
   [SqlDataType.UUID]: baseStringTypescript,

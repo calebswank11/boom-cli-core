@@ -1,5 +1,5 @@
 import { IDataRegistry, SqlDataType, TableStructureBase } from '../@types';
-import { camelToPascal } from '../utils/stringUtils';
+import { camelToPascal, snakeToCapSentence } from '../utils/stringUtils';
 
 export class ExtractEnums {
   static extract(tables: TableStructureBase[]): IDataRegistry['enums'] {
@@ -13,6 +13,7 @@ export class ExtractEnums {
           enumBaseName &&
           enumDictName
         ) {
+          const enumValues = column.enumValues ? column.enumValues : [];
           acc[enumName] = {
             tableName: table.name,
             enumName,
@@ -20,7 +21,19 @@ export class ExtractEnums {
             enumDictName,
             graphQLEnumTypeName: `${camelToPascal(enumDictName)}EnumType`,
             frontendName: `${camelToPascal(enumDictName)}EnumType`,
-            values: column.enumValues ? column.enumValues : [],
+            values: enumValues,
+            description: `Type of ${enumValues.join(', ')}`,
+            displayNames: Object.values(enumValues).reduce(
+              (acc, cur) => ({
+                ...acc,
+                [cur]: snakeToCapSentence(cur),
+              }),
+              {},
+            ),
+            // TODO Ollama implementation needed
+            // valueDescriptions: enumValues.reduce(() => {}, {})
+            // sortOrder: [],
+            // grouping: {}
           };
         }
       });

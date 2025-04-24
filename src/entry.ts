@@ -16,6 +16,16 @@ import { logBreak, logBSInfo, logFinish, logLogo } from './utils/logs';
 
 dotenv.config();
 
+const originalLog = console.log;
+
+console.log = (...args: any[]) => {
+  originalLog(
+    ...args.map((arg) =>
+      typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg,
+    ),
+  );
+};
+
 const configRegistry = ConfigRegistry.getConfigInstance();
 
 export const boomScaffold = async (config: ScaffoldingConfig) => {

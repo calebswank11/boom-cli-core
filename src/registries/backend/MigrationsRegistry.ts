@@ -2,7 +2,7 @@ import fs from 'fs';
 import { MigrationsRegistryBase } from '../../@types';
 import { FileCreator } from '../../controllers/directoryTools/FileCreator';
 import { ConfigRegistry } from '../ConfigRegistry';
-import { migrationsTemplate } from '../../templates/migrations/migration';
+import { getMigrationsTemplate } from '../../templates/migrations/migration';
 import path from 'path';
 import { logSectionHeader, logSectionHeaderError } from '../../utils/logs';
 
@@ -62,11 +62,16 @@ export class MigrationsRegistry extends ConfigRegistry {
     const fileCreator = new FileCreator();
     const config = this.getConfig();
     if (config.outputs.api.migrations.active) {
+      const migrationsTemplate = getMigrationsTemplate(config.orm);
+      if(!migrationsTemplate) {
+        throw new Error(`⚠️ Migrations Template does not exist, please check your configuration`)
+      }
       await fileCreator.createFiles(
         this.getMigrations().map(({ name, migrations }) => ({
           content: migrationsTemplate({
             ...migrations,
             enumPath: '../enums',
+            name
           }),
           path: path.join(filePath, name.replace(/.sql/g, '.ts')),
         })),

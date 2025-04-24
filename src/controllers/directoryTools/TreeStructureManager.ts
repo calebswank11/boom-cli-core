@@ -108,7 +108,7 @@ export class TreeStructureManager {
       utils: {
         root: this.withRoot(`${this.config.outputs.api.migrations.folder}/utils`),
         files: {
-          root: ['index.ts', migrationUtilsTemplates],
+          root: ['index.ts', migrationUtilsTemplates(this.config.orm)],
         },
       },
     };
@@ -119,7 +119,7 @@ export class TreeStructureManager {
       utils: {
         root: this.withRoot(`${this.config.outputs.api.seeds.folder}/utils`),
         files: {
-          root: ['index.ts', seedsUtilsIndexTemplate],
+          root: ['index.ts', seedsUtilsIndexTemplate(this.config.orm)],
         },
       },
       dev: this.withRoot(`${this.config.outputs.api.seeds.folder}/dev`),
@@ -128,26 +128,63 @@ export class TreeStructureManager {
     };
   }
   getAPIStructure() {
-    const fetchSubFolder = this.config.apiType === 'graphql' ? '/queries' : '';
-    const writeSubFolder = this.config.apiType === 'graphql' ? '/mutations' : '';
+    if (this.config.apiType === 'graphql') {
+      const fetchSubFolder = '/queries';
+      const writeSubFolder = '/mutations';
 
-    return {
-      root: this.withRoot(this.config.outputs.api.apis.folder),
-      files: {
-        root: ['schema.ts', apolloGraphqlSchemaTemplate],
-      },
-      query: this.withRoot(
-        `${this.config.outputs.api.apis.folder}${fetchSubFolder}`,
-      ),
-      mutation: this.withRoot(
-        `${this.config.outputs.api.apis.folder}${writeSubFolder}`,
-      ),
-    };
+      return {
+        root: this.withRoot(this.config.outputs.api.apis.folder),
+        files: {
+          root: ['schema.ts', apolloGraphqlSchemaTemplate],
+        },
+        query: this.withRoot(
+          `${this.config.outputs.api.apis.folder}${fetchSubFolder}`,
+        ),
+        mutation: this.withRoot(
+          `${this.config.outputs.api.apis.folder}${writeSubFolder}`,
+        ),
+      };
+    }
+    if (this.config.apiType === 'rest') {
+      return {
+        root: this.withRoot(this.config.outputs.api.apis.folder),
+        files: {
+          root: ['index.ts', `// Rest Controller Base file`],
+        },
+      };
+    }
+
+    return {};
   }
+
+  getRoutesStructure() {
+    if (this.config.apiType === 'rest') {
+      return {
+        root: this.withRoot(this.config.outputs.api.routes.folder),
+        files: {
+          root: ['index.ts', `// Rest Routes base file`],
+        },
+      };
+    }
+  }
+
   getTypedefsStructure() {
-    return {
-      root: this.withRoot(this.config.outputs.api.typedefs.folder),
-    };
+    if (this.config.apiType === 'graphql') {
+      return {
+        root: this.withRoot(this.config.outputs.api.typedefs.folder),
+      };
+    }
+  }
+
+  getModelStructure() {
+    if (this.config.apiType === 'rest') {
+      return {
+        root: this.withRoot(this.config.outputs.api.models.folder),
+        files: {
+          root: ['index.ts', '// Rest base model file'],
+        },
+      };
+    }
   }
 
   getHelperFunctionsStructure() {
@@ -186,21 +223,41 @@ export class TreeStructureManager {
     };
   }
 
+  getBaseFiles() {
+    const baseFiles: Record<string, any> = {
+      tsConfig: [
+        this.withRoot(`tsconfig.json`),
+        this.defaultTemplates.CONFIG.TSCONFIG,
+      ],
+    };
+    if (this.config.orm) {
+      switch (this.config.orm) {
+        case ORMEnum.sequelize:
+          baseFiles.sequelize = [
+            this.withRoot(`sequelize.ts`),
+            this.defaultTemplates.CONFIG.DB[this.config.orm as ORMEnum],
+          ];
+          break;
+        case ORMEnum.knex:
+          baseFiles.knexfile = [
+            this.withRoot(`knexfile.ts`),
+            this.defaultTemplates.CONFIG.DB[this.config.orm as ORMEnum],
+          ];
+          break;
+      }
+    }
+
+    return baseFiles;
+  }
+
   getBackendStructure() {
     return {
-      files: {
-        knexfile: [
-          this.withRoot(`knexfile.ts`),
-          this.defaultTemplates.CONFIG.DB[this.config.orm as ORMEnum],
-        ],
-        tsConfig: [
-          this.withRoot(`tsconfig.json`),
-          this.defaultTemplates.CONFIG.TSCONFIG,
-        ],
-      },
+      files: this.getBaseFiles(),
       helperFunctions: this.getHelperFunctionsStructure(),
       migrations: this.getMigrationsStructure(),
       apis: this.getAPIStructure(),
+      routes: this.getRoutesStructure(),
+      models: this.getModelStructure(),
       typedefs: this.getTypedefsStructure(),
       seeds: this.getSeedsStructure(),
       config: this.getConfigStructure(),

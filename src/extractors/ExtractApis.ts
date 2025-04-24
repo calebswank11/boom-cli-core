@@ -64,6 +64,7 @@ export class ExtractApis {
     tables.map((table) => {
       // process individual table
 
+      const columns = Object.values(table.columns);
       const apiData: APIData = {
         name: table.name,
         pascalCase: snakeToPascalCase(table.name),
@@ -82,8 +83,25 @@ export class ExtractApis {
         byFields: [],
         // allow limitation of api types in the config.
         methods: MethodTypeFactory.buildMethods(),
+        // TODO Ollama implementation needed
+        // documentation: {},
+        pagination: {
+          enabled: columns.some(col => col.searchable || col.sortable || col.filterable),
+          defaultPageSize: 10,
+          maxPageSize: 100,
+          strategy: 'offset',
+        }
       };
-      Object.values(table.columns).map((tableColumn) => {
+
+      if(columns.some(col => col.sensitiveData)) {
+        apiData.security = {
+          requiresAuth: true,
+          roles: [],
+          permissions: [],
+        }
+      }
+
+      columns.map((tableColumn) => {
         const argType = apiTypeParsers[tableColumn.type.name](
           tableColumn.name,
           tableColumn.type.enumDictName,
