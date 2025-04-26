@@ -28,6 +28,8 @@ import { DataRegistry } from '../../registries/DataRegistry';
 import { EndpointBuilder } from '../../builders/endpoints/EndpointBuilder';
 import { DataServiceBuilder } from '../../builders/dataServices/DataServiceBuilder';
 import { logSectionHeader } from '../../utils/logs';
+import { FileCreator } from '../../controllers/directoryTools/FileCreator';
+import { ModelBuilder } from '../../builders/models/modelBuilder';
 
 const dataRegistry = DataRegistry.getInstance();
 
@@ -72,6 +74,39 @@ export class BackendOrchestrator extends OrchestratorHelpers {
     }
   }
 
+  private async orchestrateModels() {
+    // only if sequelize for now
+    if (this.config.orm !== ORMEnum.sequelize) {
+      console.error('⚠️ Models only supported for sequelize right now.');
+      return;
+    }
+    const fileCreator = new FileCreator();
+    const builder = ModelBuilder.getBuilder(this.config.orm);
+
+    if (!builder) {
+      console.error(
+        '⚠️ ORM Models not currently supported. Open an issue on github to request',
+      );
+      return;
+    }
+
+    const modelFiles = builder.build(dataRegistry.getAllTables());
+
+    await fileCreator.createFiles(
+      modelFiles.map(({ template, path }) => ({
+        path: `${this.fileTree.api.models!.root!}/${path}.ts`,
+        content: template,
+      })),
+    );
+    // build index file
+    const modelsToImport = modelFiles.map(({ path }) => `export * from './${path}'`);
+
+    await fileCreator.createFile(
+      `${this.fileTree.api.models!.root!}/index.ts`,
+      modelsToImport.join('\n'),
+    );
+  }
+
   private async orchestrateAPIS() {
     const apiRegistry = ApisRegistry.getInstance();
     // create nested apiType folders by category
@@ -92,11 +127,6 @@ export class BackendOrchestrator extends OrchestratorHelpers {
       // create routes
       await apiRegistry.createAPIFolders(
         this.fileTree.api.routes!.root!,
-        apiFolders,
-      );
-      // create models
-      await apiRegistry.createAPIFolders(
-        this.fileTree.api.models!.root!,
         apiFolders,
       );
     }
@@ -196,6 +226,7 @@ export class BackendOrchestrator extends OrchestratorHelpers {
     await this.orchestrateMigrations();
     await this.orchestrateAPIS();
     // NOTE ^^ this needs to come before routes and typedefs to ensure injection works
+    await this.orchestrateModels();
     await this.orchestrateRoutes();
     await this.orchestrateTypedefs();
     await this.orchestrateDataServices();

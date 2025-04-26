@@ -1,7 +1,313 @@
-import { APIAggregateDictionary, TemplateToBuild } from '../../../@types';
+import {
+  APIAggregateData,
+  APIAggregateDictionary,
+  EndpointTypesEnum,
+  HelperFunction,
+  ReadEndpointTypes,
+  TemplateToBuild,
+  WriteEndpointTypes,
+} from '../../../@types';
+import { DataRegistry } from '../../../registries/DataRegistry';
+import { buildImportsTemplate } from '../../../helpers';
+import { ResponseTypeFactory } from '../../../factories/endpoints/node/ResponseTypeFactory';
+import nonIntersection from '../../../utils/utilityFunctions/nonIntersection';
+import { snakeToCamel } from '../../../utils/stringUtils';
 
 export class ExpressBuilder {
+  private baseQueryArgs = [{ name: 'limit' }, { name: 'sort' }, { name: 'offset' }];
   build(apiDict: APIAggregateDictionary): TemplateToBuild[] {
-    return [];
+    const dataRegistry = DataRegistry.getInstance();
+    const templates: TemplateToBuild[] = [];
+    Object.keys(apiDict).map((apiName) => {
+      const api = dataRegistry.getApi(apiName);
+      if (!api) {
+        console.error('API is not found, skipping');
+        return;
+      }
+      Object.keys(apiDict[apiName]).map((method) => {
+        const record = apiDict[apiName][method];
+
+        const templateToBuild = {
+          path: `${api.folders.parent}/${record.functionName}.ts`,
+          template: `${buildImportsTemplate(record.imports)}
+          `,
+        };
+
+        switch (method) {
+          case EndpointTypesEnum.CREATE_MANY:
+            templateToBuild.template += `${this.buildWrapperFunctionTemplate(method, record)(this.buildCreateManyLogicTemplate(record))}`;
+            break;
+          case EndpointTypesEnum.UPDATE_MANY:
+            templateToBuild.template += `${this.buildWrapperFunctionTemplate(method, record)(this.buildUpdateManyLogicTemplate(record))}`;
+            break;
+          case EndpointTypesEnum.UPDATE:
+            templateToBuild.template += `${this.buildWrapperFunctionTemplate(method, record)(this.buildUpdateLogicTemplate(record))}`;
+            break;
+          case EndpointTypesEnum.CREATE:
+            templateToBuild.template += `${this.buildWrapperFunctionTemplate(method, record)(this.buildCreateLogicTemplate(record))}`;
+            break;
+          case EndpointTypesEnum.DELETE:
+            templateToBuild.template += `${this.buildWrapperFunctionTemplate(method, record)(this.buildDeleteLogicTemplate(record))}`;
+            break;
+          case EndpointTypesEnum.DELETE_MANY:
+            templateToBuild.template += `${this.buildWrapperFunctionTemplate(method, record)(this.buildDeleteManyLogicTemplate(record))}`;
+            break;
+          case EndpointTypesEnum.FIND_MANY:
+            templateToBuild.template += `${this.buildWrapperFunctionTemplate(method, record)(this.buildFindManyLogicTemplate(record))}`;
+            break;
+          case EndpointTypesEnum.COUNT:
+            templateToBuild.template += `${this.buildWrapperFunctionTemplate(method, record)(this.buildCountLogicTemplate(record))}`;
+            break;
+          case EndpointTypesEnum.ID:
+          default:
+            templateToBuild.template += `${this.buildWrapperFunctionTemplate(method, record)(this.buildIdLogicTemplate(record))}`;
+            break;
+        }
+        templates.push(templateToBuild);
+      });
+    });
+
+    return templates;
+  }
+
+  buildWrapperFunctionTemplate(
+    method: ReadEndpointTypes | WriteEndpointTypes | string,
+    record: APIAggregateData,
+  ): ({ logic, args }: { logic: string; args: string }) => string {
+    return ({ logic, args }) => `
+      import {Response, Request} from 'express';
+
+      export const ${record.functionName} = async (
+        req: Request,
+        res: Response<${ResponseTypeFactory.getResponseType(method, record.typescript.name)} | { success: false; message: string }>
+      ) => {
+        ${args}
+        
+        try {
+        ${logic}
+        } catch(error) {
+          console.error('Error: ${method} of ${record.functionName}:', error)
+          res.status(500).send({
+            success: false,
+            message: 'Failed to ${method} ${record.functionName}'
+          });
+        }
+      }
+    `;
+  }
+
+  buildMappedHelperFunctionTemplate(helperFunctions: HelperFunction[]): string {
+    const dataRegistry = DataRegistry.getInstance();
+    return helperFunctions
+      .map(({ functionName, typescriptRefKey, args }) => {
+        const constName = `${snakeToCamel(args[0].replace(/_id$/g, ''))}Records`;
+        const typescript = dataRegistry.getTypescriptByName(typescriptRefKey);
+
+        const dynamicNullCheck = () => {
+          const typescriptValue = typescript.values[args[0]];
+          if (typescriptValue && !typescriptValue?.required) {
+            return `if(!${typescriptValue.name}){
+              throw new Error('${typescriptValue.name} is required and missing in one of the payloads.')
+          }`;
+          }
+          return '';
+        };
+
+        return `
+          const ${constName} = await Promise.all(
+            args.map(async ({ ${args} }) => {
+              ${dynamicNullCheck()}
+              const record = await ${functionName}(${args});
+              if (record) {
+                return record.id;
+              }
+              throw new Error(\`${constName} not found\`);
+            }),
+          );
+      
+          if (!${constName} || isEmpty(${constName})) {
+            throw new Error('${constName} not found.');
+          }
+        `;
+      })
+      .join('\n');
+  }
+
+  buildRequiredArgsChecker(
+    record: APIAggregateData,
+    argsToIgnore?: string[],
+  ): string {
+    const args = record.args || [];
+
+    const argsToUse = nonIntersection(
+      args.filter((arg) => arg.required).map((arg) => arg.name),
+      argsToIgnore || [],
+    ).filter((arg) => !(argsToIgnore || []).includes(arg));
+
+    if (argsToUse.length === 0) return '';
+
+    return `
+      const requiredFields = [${argsToUse.map((arg) => `'${arg}'`).join(', ')}];
+  
+      for (const field of requiredFields) {
+        if (!args[field]) {
+          return res.status(400).send({ success: false, message: \`Missing \${field} param\` });
+        }
+      }
+    `;
+  }
+
+  buildCreateManyLogicTemplate(record: APIAggregateData): {
+    logic: string;
+    args: string;
+  } {
+    const helperFunctions = record.helperFunctions
+      ? Object.values(record.helperFunctions)
+      : [];
+    return {
+      args: 'const args = req.body;',
+      logic: `
+      ${this.buildMappedHelperFunctionTemplate(helperFunctions)}
+      
+        const record = await ${record.dataService.name}(args);
+        
+        res.status(200).json(record);
+      `,
+    };
+  }
+  buildUpdateManyLogicTemplate(record: APIAggregateData): {
+    logic: string;
+    args: string;
+  } {
+    const helperFunctions = record.helperFunctions
+      ? Object.values(record.helperFunctions)
+      : [];
+
+    return {
+      args: 'const args = req.body;',
+      logic: `
+      ${this.buildMappedHelperFunctionTemplate(helperFunctions)}
+      
+        const record = await ${record.dataService.name}(args);
+        
+        res.status(200).json(record);
+      `,
+    };
+  }
+  buildUpdateLogicTemplate(record: APIAggregateData): {
+    logic: string;
+    args: string;
+  } {
+    return {
+      args: 'const args = req.body;',
+      logic: `
+        if(!args.id)
+          return res.status(400).send({ success: false, message: 'Missing id param' });
+      
+        const record = await ${record.dataService.name}(args);
+        
+        res.status(200).json(record);
+      `,
+    };
+  }
+  buildCreateLogicTemplate(record: APIAggregateData): {
+    logic: string;
+    args: string;
+  } {
+    return {
+      args: 'const args = req.body;',
+      logic: `
+        ${this.buildRequiredArgsChecker(record, ['id', 'uuid'])}
+      
+        const record = await ${record.dataService.name}(args);
+        
+        res.status(200).json(record);
+      `,
+    };
+  }
+  buildDeleteLogicTemplate(record: APIAggregateData): {
+    logic: string;
+    args: string;
+  } {
+    return {
+      args: 'const {id} = req.body;',
+      logic: `const deletedRecord = await ${record.dataService.name}(id);
+      
+       if(!deletedRecord) {
+          return res.status(400).send({ success: false, message: 'failed to delete record' })
+        }
+        
+        res.status(200).json({
+          id,
+        });
+      `,
+    };
+  }
+  buildDeleteManyLogicTemplate(record: APIAggregateData): {
+    logic: string;
+    args: string;
+  } {
+    return {
+      args: 'const {ids} = req.body;',
+      logic: `const deletedRecords = await ${record.dataService.name}(ids);
+      
+        if(!deletedRecords || deletedRecords.length === 0) {
+          return res.status(400).send({ success: false, message: 'failed to delete records' })
+        }
+        
+        res.status(200).json({
+          success: true,
+          ids,
+        });
+      `,
+    };
+  }
+  buildFindManyLogicTemplate(record: APIAggregateData): {
+    logic: string;
+    args: string;
+  } {
+    return {
+      args: `const args = req.query;`,
+      logic: `
+        ${this.buildRequiredArgsChecker(record)}
+      
+        const record = await ${record.dataService.name}(args);
+        
+        res.status(200).json(record);
+      `,
+    };
+  }
+  buildCountLogicTemplate(record: APIAggregateData): {
+    logic: string;
+    args: string;
+  } {
+    return {
+      logic: `const count = await ${record.dataService.name}(${record.dataService.args});
+      
+        res.status(200).json({
+          count,
+        });
+      `,
+      args: '',
+    };
+  }
+  buildIdLogicTemplate(record: APIAggregateData): {
+    logic: string;
+    args: string;
+  } {
+    return {
+      logic: `
+        if (!id) {
+          return res.status(400).send({ success: false, message: 'Missing id param' });
+        }
+      
+        const record = await ${record.dataService.name}(${record.dataService.args});
+        
+        res.status(200).json(record);
+      `,
+      args: `
+        const {id} = req.query;
+      `,
+    };
   }
 }

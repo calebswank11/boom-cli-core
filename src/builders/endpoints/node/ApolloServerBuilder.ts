@@ -8,10 +8,10 @@ import {
   WriteEndpointTypes,
 } from '../../../@types';
 import { DataRegistry } from '../../../registries/DataRegistry';
-import isEmpty from '../../../utils/utilityFunctions/isEmpty';
 import { ArgumentsFactory } from '../../../factories/endpoints/node/ArgumentsFactory';
 import { snakeToCamel } from '../../../utils/stringUtils';
 import { ResponseTypeFactory } from '../../../factories/endpoints/node/ResponseTypeFactory';
+import { buildImportsTemplate } from '../../../helpers';
 
 export class ApolloServerBuilder {
   build(apiDict: APIAggregateDictionary): TemplateToBuild[] {
@@ -31,7 +31,7 @@ export class ApolloServerBuilder {
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'mutations',
               template: `
-                ${this.buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -44,7 +44,7 @@ export class ApolloServerBuilder {
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'mutations',
               template: `
-                ${this.buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -57,7 +57,7 @@ export class ApolloServerBuilder {
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'mutations',
               template: `
-                ${this.buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -70,7 +70,7 @@ export class ApolloServerBuilder {
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'mutations',
               template: `
-                ${this.buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -83,7 +83,7 @@ export class ApolloServerBuilder {
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'mutations',
               template: `
-                ${this.buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -96,7 +96,7 @@ export class ApolloServerBuilder {
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'mutations',
               template: `
-                ${this.buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -109,7 +109,7 @@ export class ApolloServerBuilder {
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'queries',
               template: `
-                ${this.buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -122,7 +122,7 @@ export class ApolloServerBuilder {
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'queries',
               template: `
-                ${this.buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -136,7 +136,7 @@ export class ApolloServerBuilder {
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'queries',
               template: `
-                ${this.buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -150,32 +150,6 @@ export class ApolloServerBuilder {
     return templates;
   }
 
-  buildImportsTemplate({
-    utilsImports,
-    enumImports,
-    typeImports,
-    serviceImports,
-  }: APIAggregateData['imports']): string {
-    let importTemplate = '';
-    if (!isEmpty(enumImports)) {
-      importTemplate += `import {${enumImports.join(', ')}} from '../../../../enums';`;
-    }
-    if (!isEmpty(utilsImports)) {
-      importTemplate += utilsImports
-        .map(
-          (utility) =>
-            `import ${utility} from '../../../utils/utilityFunctions/${utility}';`,
-        )
-        .join('\n');
-    }
-    if (!isEmpty(typeImports)) {
-      importTemplate += `import {${typeImports.join(', ')}} from '../../../@types';`;
-    }
-    if (!isEmpty(serviceImports)) {
-      importTemplate += `import {${serviceImports.join(', ')}} from '../../../dataServices';`;
-    }
-    return importTemplate;
-  }
 
   buildWrapperFunctionTemplate(
     method: ReadEndpointTypes | WriteEndpointTypes | string,

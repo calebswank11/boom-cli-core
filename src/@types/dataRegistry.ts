@@ -83,6 +83,12 @@ export interface TableConstraint {
   type: string;
   expression: string | undefined;
 }
+export interface TableColumnIndexes {
+  name: string;
+  columns: string[];
+  unique: boolean;
+  method?: 'btree' | 'hash' | 'gin' | 'gist' | string | null;
+}
 export interface TableColumnStructureBase {
   fileOriginatorName?: string;
   name: string;
@@ -105,12 +111,7 @@ export interface TableColumnStructureBase {
   };
   nullable: boolean;
   default?: string;
-  indexes?: {
-    name: string;
-    columns: string[];
-    unique: boolean;
-    method?: 'btree' | 'hash' | 'gin' | 'gist' | string | null;
-  };
+  indexes?: TableColumnIndexes;
   relationships?: TableRelationship[];
   validationRules?: ValidationRule[];
   description?: string;

@@ -1,3 +1,6 @@
+import { APIAggregateData } from '../../@types';
+import isEmpty from '../../utils/utilityFunctions/isEmpty';
+
 export const apiTypeParsers: Record<
   string,
   (colName: string, enumDictName?: string) => string
@@ -36,3 +39,30 @@ export const apiInlineTypeParsers: Record<
   BOOLEAN: (colName) => `boolean`,
   TEXT: (colName) => ` string`,
 };
+
+export function buildImportsTemplate({
+  utilsImports,
+  enumImports,
+  typeImports,
+  serviceImports,
+}: APIAggregateData['imports']): string {
+  let importTemplate = '';
+  if (!isEmpty(enumImports)) {
+    importTemplate += `import {${enumImports.join(', ')}} from '../../../../enums';`;
+  }
+  if (!isEmpty(utilsImports)) {
+    importTemplate += utilsImports
+    .map(
+      (utility) =>
+        `import ${utility} from '../../../utils/utilityFunctions/${utility}';`,
+    )
+    .join('\n');
+  }
+  if (!isEmpty(typeImports)) {
+    importTemplate += `import {${typeImports.join(', ')}} from '../../../@types';`;
+  }
+  if (!isEmpty(serviceImports)) {
+    importTemplate += `import {${serviceImports.join(', ')}} from '../../../dataServices';`;
+  }
+  return importTemplate;
+}

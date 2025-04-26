@@ -12,7 +12,7 @@ export const sequelizeMigrationsTemplate = ({
   enumPath,
   name,
 }: MigrationsBase & { enumPath: string; name: string }) => `
-import { QueryInterface, DataTypes } from 'sequelize';
+import { QueryInterface, Sequelize } from 'sequelize';
 import {
   buildDefaults,
   DROP_ON_UPDATE_TIMESTAMP_FUNCTION,
