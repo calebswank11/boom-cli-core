@@ -1,4 +1,4 @@
-import { ORMEnum, PackageRegistryBase } from '../@types';
+import { APIType, LibrariesEnum, ORMEnum, PackageRegistryBase } from '../@types';
 import { ConfigRegistry } from '../registries';
 
 export const packageRegistryTemplate = (
@@ -22,7 +22,7 @@ export const packageRegistryTemplate = (
     ...dependenciesConfig.general,
     ...dependenciesConfig.library.general,
     // TODO hook up express as an option
-    ...dependenciesConfig.api.type['graphql'],
+    ...dependenciesConfig.api.type[config.apiType as APIType],
     ...dependenciesConfig.orm.general,
     ...dependenciesConfig.orm[config.orm as ORMEnum],
   };

@@ -53,7 +53,12 @@ export interface ValidationRule {
   value?: any;
   required?: boolean;
   message: string;
-  customValidator?: 'between_numbers' | 'phone' | 'email' | 'length_check' | 'enum_check'; // Reference to a custom validation function
+  customValidator?:
+    | 'between_numbers'
+    | 'phone'
+    | 'email'
+    | 'length_check'
+    | 'enum_check'; // Reference to a custom validation function
 }
 
 export interface TableRelationship {
@@ -121,7 +126,14 @@ export interface TableColumnStructureBase {
   sortable?: boolean;
   filterable?: boolean;
   rawDefinition?: string;
-  inputType?: 'text' | 'email' | 'textarea' | 'select' | 'date' | 'checkbox' | 'number';
+  inputType?:
+    | 'text'
+    | 'email'
+    | 'textarea'
+    | 'select'
+    | 'date'
+    | 'checkbox'
+    | 'number';
   isRequired?: boolean;
 }
 
@@ -208,10 +220,13 @@ export interface APIDocumentation {
   tags: string[];
   exampleRequests: Record<string, any>;
   exampleResponses: Record<string, any>;
-  parameters?: Record<string, {
-    description: string;
-    example?: any;
-  }>;
+  parameters?: Record<
+    string,
+    {
+      description: string;
+      example?: any;
+    }
+  >;
 }
 
 export interface APIData {
@@ -411,7 +426,8 @@ export interface FeRouteData {
 }
 
 export interface IDataRegistry {
-  tables: { // complete
+  tables: {
+    // complete
     [tableName: string]: TableStructureBase;
   };
   apis: {
@@ -606,11 +622,14 @@ export interface IDataRegistry {
     };
     performance?: {
       tool: 'k6' | 'JMeter' | 'Lighthouse';
-      scenarios: Record<string, {
-        vus: number;
-        duration: string;
-        thresholds: Record<string, string>;
-      }>;
+      scenarios: Record<
+        string,
+        {
+          vus: number;
+          duration: string;
+          thresholds: Record<string, string>;
+        }
+      >;
     };
   };
   documentation: {

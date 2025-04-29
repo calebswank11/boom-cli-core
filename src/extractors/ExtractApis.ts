@@ -86,19 +86,21 @@ export class ExtractApis {
         // TODO Ollama implementation needed
         // documentation: {},
         pagination: {
-          enabled: columns.some(col => col.searchable || col.sortable || col.filterable),
+          enabled: columns.some(
+            (col) => col.searchable || col.sortable || col.filterable,
+          ),
           defaultPageSize: 10,
           maxPageSize: 100,
           strategy: 'offset',
-        }
+        },
       };
 
-      if(columns.some(col => col.sensitiveData)) {
+      if (columns.some((col) => col.sensitiveData)) {
         apiData.security = {
           requiresAuth: true,
           roles: [],
           permissions: [],
-        }
+        };
       }
 
       columns.map((tableColumn) => {
@@ -119,7 +121,7 @@ export class ExtractApis {
             tableColumn.name.replace(/_id$/g, ''),
           ),
           type: argType,
-          required: tableColumn.nullable,
+          required: tableColumn.isRequired || tableColumn.reference?.colName != null,
           argWithType: [tableColumn.name, inlineArgType],
         };
         if (tableColumn.unique) {

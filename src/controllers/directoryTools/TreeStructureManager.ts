@@ -19,6 +19,7 @@ import { knexSingletonDBTemplate } from '../../templates/database/knex/singleton
 import { sequelizeSingletonDBTemplate } from '../../templates/database/sequelize/singletonAccess';
 import { apolloGraphqlSchemaTemplate } from '../../templates/apiRoutes/node/apolloGraphqlSchema';
 import { tsConfigTemplate } from '../../templates/tsConfigTemplate';
+import { routeUtilsTemplate } from '../../templates/apiRoutes/routeUtilsTemplate';
 
 export class TreeStructureManager {
   private config: ScaffoldingConfig;
@@ -163,6 +164,7 @@ export class TreeStructureManager {
         root: this.withRoot(this.config.outputs.api.routes.folder),
         files: {
           root: ['index.ts', `// Rest Routes base file`],
+          utils: ['utils.ts', routeUtilsTemplate(this.config.library)],
         },
       };
     }
@@ -192,7 +194,7 @@ export class TreeStructureManager {
       root: this.withRoot(this.config.outputs.api.helperFunctions.folder),
       files: {
         root: ['index.ts'],
-        utils: ['utils.ts', utilsTemplate],
+        utils: ['utils.ts', utilsTemplate(this.config.orm)],
       },
     };
   }

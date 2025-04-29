@@ -1,5 +1,5 @@
 import { ConfigRegistry } from '../ConfigRegistry';
-import { RouteBase } from '../../@types';
+import { RouteBase, TemplateToBuild } from '../../@types';
 import fs from 'fs';
 import { FileCreator } from '../../controllers/directoryTools/FileCreator';
 import path from 'path';
@@ -63,14 +63,14 @@ export class RouteRegistry extends ConfigRegistry {
 
   async createBaseRoutes(
     rootFilePath: string,
-    baseRoutes: { filePath: string; template: string }[],
+    baseRoutes: TemplateToBuild[],
   ) {
     const fileCreator = new FileCreator();
     const config = this.getConfig();
     if (config.outputs.api.apis.active) {
       for (const route of baseRoutes) {
         await fileCreator.createFile(
-          path.join(rootFilePath, route.filePath),
+          path.join(rootFilePath, route.path),
           route.template,
         );
       }

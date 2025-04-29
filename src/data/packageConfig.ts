@@ -43,6 +43,14 @@ const dependencies = {
         'apollo-server-express': '^3.10.2',
         '@apollo/server': 'latest',
       },
+      rest: {
+        express: '^4.18.2',
+        'body-parser': '^1.20.2',
+        helmet: '^6.0.1',
+        morgan: '^1.10.0',
+        zod: '^3.20.0',
+        'http-errors': '^2.0.0',
+      },
     },
     handler: {
       general: {},
@@ -96,6 +104,7 @@ const devDependencies = {
           '@types/express': '^4.17.21',
         },
       },
+      rest: {},
     },
     handler: {
       apollo: {

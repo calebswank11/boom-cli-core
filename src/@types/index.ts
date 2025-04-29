@@ -106,6 +106,7 @@ export interface PackageRegistryBase {
     api: {
       type: {
         graphql: Record<string, string>;
+        rest: Record<string, string>;
       };
       handler: {
         general: Record<string, string>;

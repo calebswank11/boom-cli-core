@@ -14,7 +14,7 @@ import {
   buildTypescriptData,
 } from '../../builders';
 import {
-  BuildDataServicesPayload,
+  BuildDataServicesPayload, LibrariesEnum,
   ORMEnum,
   ScaffoldingConfig,
   TableStructureByFile,
@@ -156,7 +156,21 @@ export class BackendOrchestrator extends OrchestratorHelpers {
     const routesData = routeFactory.buildRoutes(dataRegistry);
     routeRegistry.saveRoutes(routesData);
     const routes = routeFactory.getRoutesByFolder(routesData);
-    await routeRegistry.createBaseRoutes(this.getFileTree().api.apis.root!, routes);
+    if (this.config.apiType === 'graphql') {
+      await routeRegistry.createBaseRoutes(
+        this.getFileTree().api.apis.root!,
+        routes,
+      );
+    } else {
+      if (!this.getFileTree().api.routes) {
+        console.error('⚠️ Cannot create routes, config for routes is missing.');
+        return;
+      }
+      await routeRegistry.createBaseRoutes(
+        this.getFileTree().api.routes!.root!,
+        routes,
+      );
+    }
   }
 
   private async orchestrateTypedefs() {
@@ -189,6 +203,7 @@ export class BackendOrchestrator extends OrchestratorHelpers {
           enumImports: [],
           dataServices: [],
           typesToCreate: [],
+          modelImports: []
         },
       }),
       {},

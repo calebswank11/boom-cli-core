@@ -8,6 +8,12 @@ export const sanitizeSQL = (sql: string): string => {
     .replace(/(?<!;)\s*$/, ';'); // Ensure final semicolon
 };
 
+export function capitalizeFirstChar(str: string): string {
+  if (!str) return str; // handle empty string/null
+
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 export const snakeToPascalCase = (str: string): string =>
   str
     .split('_')

@@ -4,4 +4,5 @@ export type BuildDataServicesPayload = {
   enumImports: string[];
   typesToCreate: string[],
   dataServices: string[];
+  modelImports: string[]
 }

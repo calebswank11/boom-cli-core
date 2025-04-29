@@ -9,7 +9,7 @@ export class SequelizeModelBuilder {
   static build(tables: TableStructureBase[]): TemplateToBuild[] {
     return tables.map((table) => {
       const tableColumns = Object.values(table.columns);
-      const modelName = table.pascalCase;
+      const modelName = `${table.pascalCase}Model`;
       const modelAttributes = tableColumns.map((column) => {
         const key = column.name;
         let modelObj = `${key}: {\n`;
@@ -83,7 +83,9 @@ export class SequelizeModelBuilder {
          
          const sequelize = getSequelize();
          
-        const ${modelName} = sequelize.define('${modelName}', {${modelAttributes.join(',\n')}}, ${JSON.stringify(modelConfig, null, 2)});`,
+        export const ${modelName} = sequelize.define('${modelName}', {${modelAttributes.join(',\n')}}, ${JSON.stringify(modelConfig, null, 2)});
+          
+        `,
         path: `${table.camelCase}`,
       };
     });

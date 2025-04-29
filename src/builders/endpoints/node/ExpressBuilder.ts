@@ -7,11 +7,11 @@ import {
   TemplateToBuild,
   WriteEndpointTypes,
 } from '../../../@types';
-import { DataRegistry } from '../../../registries/DataRegistry';
-import { buildImportsTemplate } from '../../../helpers';
 import { ResponseTypeFactory } from '../../../factories/endpoints/node/ResponseTypeFactory';
-import nonIntersection from '../../../utils/utilityFunctions/nonIntersection';
+import { buildImportsTemplate } from '../../../helpers';
+import { DataRegistry } from '../../../registries/DataRegistry';
 import { snakeToCamel } from '../../../utils/stringUtils';
+import nonIntersection from '../../../utils/utilityFunctions/nonIntersection';
 
 export class ExpressBuilder {
   private baseQueryArgs = [{ name: 'limit' }, { name: 'sort' }, { name: 'offset' }];
@@ -29,7 +29,12 @@ export class ExpressBuilder {
 
         const templateToBuild = {
           path: `${api.folders.parent}/${record.functionName}.ts`,
-          template: `${buildImportsTemplate(record.imports)}
+          template: `${buildImportsTemplate(record.imports, {
+            utilsImports: [],
+            enumImports: [],
+            typeImports: [],
+            serviceImports: [],
+          })}
           `,
         };
 
@@ -82,7 +87,7 @@ export class ExpressBuilder {
         res: Response<${ResponseTypeFactory.getResponseType(method, record.typescript.name)} | { success: false; message: string }>
       ) => {
         ${args}
-        
+
         try {
         ${logic}
         } catch(error) {
@@ -124,7 +129,7 @@ export class ExpressBuilder {
               throw new Error(\`${constName} not found\`);
             }),
           );
-      
+
           if (!${constName} || isEmpty(${constName})) {
             throw new Error('${constName} not found.');
           }
@@ -148,7 +153,7 @@ export class ExpressBuilder {
 
     return `
       const requiredFields = [${argsToUse.map((arg) => `'${arg}'`).join(', ')}];
-  
+
       for (const field of requiredFields) {
         if (!args[field]) {
           return res.status(400).send({ success: false, message: \`Missing \${field} param\` });
@@ -168,9 +173,9 @@ export class ExpressBuilder {
       args: 'const args = req.body;',
       logic: `
       ${this.buildMappedHelperFunctionTemplate(helperFunctions)}
-      
+
         const record = await ${record.dataService.name}(args);
-        
+
         res.status(200).json(record);
       `,
     };
@@ -187,9 +192,9 @@ export class ExpressBuilder {
       args: 'const args = req.body;',
       logic: `
       ${this.buildMappedHelperFunctionTemplate(helperFunctions)}
-      
+
         const record = await ${record.dataService.name}(args);
-        
+
         res.status(200).json(record);
       `,
     };
@@ -203,9 +208,9 @@ export class ExpressBuilder {
       logic: `
         if(!args.id)
           return res.status(400).send({ success: false, message: 'Missing id param' });
-      
+
         const record = await ${record.dataService.name}(args);
-        
+
         res.status(200).json(record);
       `,
     };
@@ -218,9 +223,9 @@ export class ExpressBuilder {
       args: 'const args = req.body;',
       logic: `
         ${this.buildRequiredArgsChecker(record, ['id', 'uuid'])}
-      
+
         const record = await ${record.dataService.name}(args);
-        
+
         res.status(200).json(record);
       `,
     };
@@ -232,11 +237,11 @@ export class ExpressBuilder {
     return {
       args: 'const {id} = req.body;',
       logic: `const deletedRecord = await ${record.dataService.name}(id);
-      
+
        if(!deletedRecord) {
           return res.status(400).send({ success: false, message: 'failed to delete record' })
         }
-        
+
         res.status(200).json({
           id,
         });
@@ -250,11 +255,11 @@ export class ExpressBuilder {
     return {
       args: 'const {ids} = req.body;',
       logic: `const deletedRecords = await ${record.dataService.name}(ids);
-      
+
         if(!deletedRecords || deletedRecords.length === 0) {
           return res.status(400).send({ success: false, message: 'failed to delete records' })
         }
-        
+
         res.status(200).json({
           success: true,
           ids,
@@ -270,9 +275,9 @@ export class ExpressBuilder {
       args: `const args = req.query;`,
       logic: `
         ${this.buildRequiredArgsChecker(record)}
-      
+
         const record = await ${record.dataService.name}(args);
-        
+
         res.status(200).json(record);
       `,
     };
@@ -283,7 +288,7 @@ export class ExpressBuilder {
   } {
     return {
       logic: `const count = await ${record.dataService.name}(${record.dataService.args});
-      
+
         res.status(200).json({
           count,
         });
@@ -300,9 +305,9 @@ export class ExpressBuilder {
         if (!id) {
           return res.status(400).send({ success: false, message: 'Missing id param' });
         }
-      
+
         const record = await ${record.dataService.name}(${record.dataService.args});
-        
+
         res.status(200).json(record);
       `,
       args: `

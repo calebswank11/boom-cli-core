@@ -161,6 +161,10 @@ export class DataRegistry {
     return enumNames.map((enumName) => this.structure.enums[enumName]) || null;
   }
 
+  getAllTableToApiRelationships() {
+    return this.structure.relationships.tableToApi;
+  }
+
   getTableToApiRelationship(tableName: string): string[] | null {
     return this.structure.relationships.tableToApi[tableName] || null;
   }

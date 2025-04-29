@@ -7,6 +7,7 @@ import {
   WriteEndpointTypes,
 } from '../../../@types';
 import {
+  camelToPascal,
   snakeToCamel,
   snakeToCapSentence,
   snakeToPascalCase,
@@ -94,20 +95,21 @@ export class ArgumentsFactory {
 
   static getArgsTemplate(
     type: ReadEndpointTypes | WriteEndpointTypes | string,
-    args: APIArgument[],
+    record: APIAggregateData,
   ): string {
+    const args = record.args || [];
     if (args.length === 0) return 'args: any';
     switch (type) {
       case EndpointTypesEnum.CREATE_MANY:
       case ReadEndpointTypes.FIND_MANY:
-        return `args: {${args.map(buildKeyValPair)}}[]`;
+        return `args: ${camelToPascal(record.functionName + 'Args')}[]`;
       case EndpointTypesEnum.UPDATE_MANY:
-        return `args: {${args.map(buildKeyValPair)}}[]`;
+        return `args: ${camelToPascal(record.functionName + 'Args')}[]`;
       case ReadEndpointTypes.COUNT:
         return 'args: null';
       case EndpointTypesEnum.UPDATE:
       case EndpointTypesEnum.CREATE:
-        return `{${args.map((arg) => arg.name).join(',\n')}}: {${args.map(buildKeyValPair)}}`;
+        return `{${args.map((arg) => arg.name).join(',\n')}}: ${camelToPascal(record.functionName + 'Args')}`;
       case EndpointTypesEnum.DELETE:
       case ReadEndpointTypes.ID:
         return `{id}: {id: string;}`;

@@ -7,11 +7,11 @@ import {
   TemplateToBuild,
   WriteEndpointTypes,
 } from '../../../@types';
-import { DataRegistry } from '../../../registries/DataRegistry';
 import { ArgumentsFactory } from '../../../factories/endpoints/node/ArgumentsFactory';
-import { snakeToCamel } from '../../../utils/stringUtils';
 import { ResponseTypeFactory } from '../../../factories/endpoints/node/ResponseTypeFactory';
 import { buildImportsTemplate } from '../../../helpers';
+import { DataRegistry } from '../../../registries/DataRegistry';
+import { pascalToCamel, snakeToCamel } from '../../../utils/stringUtils';
 
 export class ApolloServerBuilder {
   build(apiDict: APIAggregateDictionary): TemplateToBuild[] {
@@ -25,13 +25,19 @@ export class ApolloServerBuilder {
       }
       Object.keys(apiDict[apiName]).map((method) => {
         const record = apiDict[apiName][method];
+        const additionalImports = {
+          utilsImports: [],
+          enumImports: [],
+          typeImports: [`${pascalToCamel(record.functionName)}Args`],
+          serviceImports: [],
+        };
         switch (method) {
           case EndpointTypesEnum.CREATE_MANY:
             templates.push({
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'mutations',
               template: `
-                ${buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports, additionalImports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -44,7 +50,7 @@ export class ApolloServerBuilder {
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'mutations',
               template: `
-                ${buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports, additionalImports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -57,7 +63,7 @@ export class ApolloServerBuilder {
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'mutations',
               template: `
-                ${buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports, additionalImports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -70,7 +76,7 @@ export class ApolloServerBuilder {
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'mutations',
               template: `
-                ${buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports, additionalImports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -83,7 +89,7 @@ export class ApolloServerBuilder {
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'mutations',
               template: `
-                ${buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports, additionalImports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -96,7 +102,7 @@ export class ApolloServerBuilder {
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'mutations',
               template: `
-                ${buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports, additionalImports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -109,7 +115,7 @@ export class ApolloServerBuilder {
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'queries',
               template: `
-                ${buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports, additionalImports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -122,7 +128,7 @@ export class ApolloServerBuilder {
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'queries',
               template: `
-                ${buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports, additionalImports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -136,7 +142,7 @@ export class ApolloServerBuilder {
               path: `${api.folders.parent}/${record.functionName}.ts`,
               folder: 'queries',
               template: `
-                ${buildImportsTemplate(record.imports)}
+                ${buildImportsTemplate(record.imports, additionalImports)}
                 ${this.buildWrapperFunctionTemplate(
                   method,
                   record,
@@ -157,11 +163,13 @@ export class ApolloServerBuilder {
   ): (logic: string) => string {
     return (logic: string) => `
       export const ${record.functionName} = async (
-        ${ArgumentsFactory.getArgsTemplate(method, record.args || [])}
+        parent: any,
+        ${ArgumentsFactory.getArgsTemplate(method, record || [])},
+        context: any,
         ): Promise<${ResponseTypeFactory.getResponseType(method, record.typescript.name)} | undefined> => {
         ${logic}
       }
-      
+
       export default ${record.functionName};
     `;
   }
@@ -194,7 +202,7 @@ export class ApolloServerBuilder {
               throw new Error(\`${constName} not found\`);
             }),
           );
-      
+
           if (!${constName} || isEmpty(${constName})) {
             throw new Error('${constName} not found.');
           }
@@ -224,7 +232,7 @@ export class ApolloServerBuilder {
         return `
           ${dynamicNullCheck()}
           const ${constName} = await ${functionName}(${args});
-      
+
           if (!${constName} || isEmpty(${constName})) {
             throw new Error('${constName} not found.');
           }
@@ -240,7 +248,7 @@ export class ApolloServerBuilder {
     return `
       try {
         ${this.buildMappedHelperFunctionTemplate(helperFunctions)}
-        
+
         return ${record.dataService.name}(${record.dataService.args});
       } catch (error) {
         console.error('There was an error processing the request:', error)
@@ -254,7 +262,7 @@ export class ApolloServerBuilder {
     return `
       try {
         ${this.buildMappedHelperFunctionTemplate(helperFunctions)}
-        
+
         return ${record.dataService.name}(${record.dataService.args});
       } catch (error) {
         console.error('There was an error processing the request:', error)
@@ -268,7 +276,7 @@ export class ApolloServerBuilder {
     return `
       try {
         ${this.buildStaticHelperFunctionTemplate(helperFunctions)}
-        
+
         return ${record.dataService.name}(${record.dataService.args});
       } catch (error) {
         console.error('There was an error processing the request:', error)
@@ -282,7 +290,7 @@ export class ApolloServerBuilder {
     return `
       try {
         ${this.buildStaticHelperFunctionTemplate(helperFunctions)}
-        
+
         return ${record.dataService.name}(${record.dataService.args});
       } catch (error) {
         console.error('There was an error processing the request:', error)

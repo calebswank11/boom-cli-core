@@ -1,4 +1,4 @@
-import { EndpointTypesEnum, RouteArgBase, RouteBase } from '../../../../@types';
+import { EndpointTypesEnum, RouteArgBase, RouteBase, TemplateToBuild } from '../../../../@types';
 import { DataRegistry } from '../../../../registries/DataRegistry';
 import { EndpointNameFactory } from '../../../../factories/endpoints/node/EndpointNameFactory';
 import { pascalToCamel } from '../../../../utils/stringUtils';
@@ -131,7 +131,7 @@ export class ApolloServerRouteBuilder {
   // this _is_ actually used in the Backend Orchestrator
   static getRoutesByFolder(
     routes: RouteBase[],
-  ): { filePath: string; template: string }[] {
+  ): TemplateToBuild[] {
     const folders = [...new Set(routes.map((route) => route.folder))];
     const buckets = {
       mutation: folders.reduce<Record<string, RouteBase[]>>(
@@ -180,7 +180,7 @@ export class ApolloServerRouteBuilder {
           return this.resolverObjectTemplate(route);
         });
         return {
-          filePath: `${type === 'mutation' ? 'mutations' : 'queries'}/${folder}/index.ts`,
+          path: `${type === 'mutation' ? 'mutations' : 'queries'}/${folder}/index.ts`,
           template: this.buildResolverFileTemplate(
             type === 'mutation' ? 'Mutation' : 'Query',
             folder,
@@ -234,7 +234,7 @@ export class ApolloServerRouteBuilder {
     });
 
     const rootMutationResolver = {
-      filePath: `mutations/index.ts`,
+      path: `mutations/index.ts`,
       template: `
         ${rootMutationResolversToImport.join('\n')}
         import { GraphQLNonNull, GraphQLObjectType } from 'graphql/type';
@@ -245,7 +245,7 @@ export class ApolloServerRouteBuilder {
       `,
     };
     const rootQueryResolver = {
-      filePath: `queries/index.ts`,
+      path: `queries/index.ts`,
       template: `
         ${rootQueryResolversToImport.join('\n')}
         import { GraphQLNonNull, GraphQLObjectType } from 'graphql/type';
@@ -262,7 +262,7 @@ export class ApolloServerRouteBuilder {
       rootMutationResolver,
       rootQueryResolver,
       {
-        filePath: 'utils.ts',
+        path: 'utils.ts',
         template: `
           import { GraphQLBoolean, GraphQLInt, GraphQLObjectType } from 'graphql/type';
           

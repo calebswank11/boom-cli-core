@@ -45,10 +45,15 @@ export function buildImportsTemplate({
   enumImports,
   typeImports,
   serviceImports,
+}: APIAggregateData['imports'], {
+  utilsImports: additionalUtilsImports,
+  enumImports: additionalEnumImports,
+  typeImports: additionalTypeImports,
+  serviceImports: additionalServiceImports
 }: APIAggregateData['imports']): string {
   let importTemplate = '';
   if (!isEmpty(enumImports)) {
-    importTemplate += `import {${enumImports.join(', ')}} from '../../../../enums';`;
+    importTemplate += `import {${enumImports.join(', ')}, ${(additionalEnumImports || []).join(', ')}} from '../../../../enums';`;
   }
   if (!isEmpty(utilsImports)) {
     importTemplate += utilsImports
@@ -57,12 +62,20 @@ export function buildImportsTemplate({
         `import ${utility} from '../../../utils/utilityFunctions/${utility}';`,
     )
     .join('\n');
+    if (!isEmpty(additionalUtilsImports)) {
+      importTemplate += additionalUtilsImports
+      .map(
+        (utility) =>
+          `import ${utility} from '../../../utils/utilityFunctions/${utility}';`,
+      )
+      .join('\n');
+    }
   }
   if (!isEmpty(typeImports)) {
-    importTemplate += `import {${typeImports.join(', ')}} from '../../../@types';`;
+    importTemplate += `import {${typeImports.join(', ')}, ${(additionalTypeImports || []).join(', ')}} from '../../../@types';`;
   }
   if (!isEmpty(serviceImports)) {
-    importTemplate += `import {${serviceImports.join(', ')}} from '../../../dataServices';`;
+    importTemplate += `import {${serviceImports.join(', ')}, ${(additionalServiceImports || []).join(', ')}} from '../../../dataServices';`;
   }
   return importTemplate;
 }
