@@ -3,23 +3,23 @@ import { ORMEnum, ScaffoldingConfig } from '../../@types';
 import { indexTypesTemplate } from '../../templates/@types';
 import { commonIndexTypesTemplate } from '../../templates/@types/common';
 import { refiningTypesTemplate } from '../../templates/@types/common/refining';
-import { typedefsTypesTemplate } from '../../templates/@types/typedefs';
 import { helpersTypesTemplate } from '../../templates/@types/tables/helpers';
+import { typedefsTypesTemplate } from '../../templates/@types/typedefs';
+import { utilsTemplate } from '../../templates/@types/utils';
+import { apolloGraphqlSchemaTemplate } from '../../templates/apiRoutes/node/apolloGraphqlSchema';
+import { routeUtilsTemplate } from '../../templates/apiRoutes/routeUtilsTemplate';
+import { knexDBConfigTemplate } from '../../templates/database/knex/config';
+import { knexSingletonDBTemplate } from '../../templates/database/knex/singletonAccess';
+import { sequelizeDBConfigTemplate } from '../../templates/database/sequelize/config';
+import { sequelizeSingletonDBTemplate } from '../../templates/database/sequelize/singletonAccess';
 import { migrationUtilsTemplates } from '../../templates/migrations/utils';
+import { seedsUtilsIndexTemplate } from '../../templates/seeds/utils';
+import { tsConfigTemplate } from '../../templates/tsConfigTemplate';
 import { indexUtilityFunctionsTemplate } from '../../templates/utils/utilityFunctions';
 import { deepCloneTemplate } from '../../templates/utils/utilityFunctions/deepClone';
 import { getTemplate } from '../../templates/utils/utilityFunctions/get';
 import { intersectionTemplate } from '../../templates/utils/utilityFunctions/intersection';
 import { isEmptyTemplate } from '../../templates/utils/utilityFunctions/isEmpty';
-import { utilsTemplate } from '../../templates/@types/utils';
-import { seedsUtilsIndexTemplate } from '../../templates/seeds/utils';
-import { knexDBConfigTemplate } from '../../templates/database/knex/config';
-import { sequelizeDBConfigTemplate } from '../../templates/database/sequelize/config';
-import { knexSingletonDBTemplate } from '../../templates/database/knex/singletonAccess';
-import { sequelizeSingletonDBTemplate } from '../../templates/database/sequelize/singletonAccess';
-import { apolloGraphqlSchemaTemplate } from '../../templates/apiRoutes/node/apolloGraphqlSchema';
-import { tsConfigTemplate } from '../../templates/tsConfigTemplate';
-import { routeUtilsTemplate } from '../../templates/apiRoutes/routeUtilsTemplate';
 
 export class TreeStructureManager {
   private config: ScaffoldingConfig;
@@ -328,7 +328,6 @@ export class TreeStructureManager {
   }
 
   getTreeMap() {
-    console.log(`${this.config.srcRoot}/data/registryData`);
     return {
       root: this.withRoot(''),
       enums: this.withRoot(this.config.outputs.enums.folder),

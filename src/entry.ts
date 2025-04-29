@@ -1,9 +1,5 @@
 import dotenv from 'dotenv';
 import { ScaffoldingConfig } from './@types';
-import { ConfigRegistry } from './registries';
-import { TreeStructureManager } from './controllers/directoryTools/TreeStructureManager';
-import { TreeCreator } from './controllers/directoryTools/TreeCreator';
-import { ProcessSqlController } from './controllers/directoryTools/ProcessSqlController';
 import {
   BackendOrchestrator,
   CICDOrchestrator,
@@ -12,6 +8,10 @@ import {
   EnumsOrchestrator,
   FrontendOrchestrator,
 } from './_starters';
+import { ProcessSqlController } from './controllers/directoryTools/ProcessSqlController';
+import { TreeCreator } from './controllers/directoryTools/TreeCreator';
+import { TreeStructureManager } from './controllers/directoryTools/TreeStructureManager';
+import { ConfigRegistry } from './registries';
 import { logBreak, logBSInfo, logFinish, logLogo } from './utils/logs';
 
 dotenv.config();
@@ -45,7 +45,6 @@ export const boomScaffold = async (config: ScaffoldingConfig) => {
     await processSqlController.processFiles();
 
     const tableStructure = processSqlController.getStructure();
-
     const dataOrchestrator = new DataOrchestrator(config, tableStructure);
     dataOrchestrator.extractData();
 
@@ -60,6 +59,7 @@ export const boomScaffold = async (config: ScaffoldingConfig) => {
     await frontendOrchestrator.scaffold();
     await cicdOrchestrator.scaffold();
     await cloudOpsOrchestrator.scaffold();
+
     logBreak();
     logBreak();
     if (process.env.NODE_ENV !== 'production') {
@@ -69,7 +69,10 @@ export const boomScaffold = async (config: ScaffoldingConfig) => {
     logBSInfo();
     logBreak();
     logFinish();
-    // NOTE delete existing files for cleanup?
+
+    // Force clear any remaining console output
+    console.clear();
+
   } catch (error) {
     console.error('');
     console.error('Process was interrupted because of an error.');

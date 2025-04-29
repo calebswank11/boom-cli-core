@@ -1,26 +1,26 @@
+import path from 'path';
 import {
-  APIData,
-  BuildDataServicesPayload,
-  EndpointTypesEnum,
-  TemplateToBuild,
+    APIData,
+    BuildDataServicesPayload,
+    EndpointTypesEnum,
+    TemplateToBuild,
 } from '../../../@types';
-import { DataRegistry } from '../../../registries/DataRegistry';
-import isEmpty from '../../../utils/utilityFunctions/isEmpty';
 import { EndpointNameFactory } from '../../../factories/endpoints/node/EndpointNameFactory';
 import { HelperFunctionFactory } from '../../../factories/endpoints/node/HelperFunctionFactory';
-import { camelToPascal } from '../../../utils/stringUtils';
+import { DataRegistry } from '../../../registries/DataRegistry';
 import {
-  countSequelizeTemplate,
-  createManySequelizeTemplate,
-  createSequelizeTemplate,
-  deleteManySequelizeTemplate,
-  deleteSequelizeTemplate,
-  findByIdSequelizeTemplate,
-  findManySequelizeTemplate,
-  updateManySequelizeTemplate,
-  updateSequelizeTemplate,
+    countSequelizeTemplate,
+    createManySequelizeTemplate,
+    createSequelizeTemplate,
+    deleteManySequelizeTemplate,
+    deleteSequelizeTemplate,
+    findByIdSequelizeTemplate,
+    findManySequelizeTemplate,
+    updateManySequelizeTemplate,
+    updateSequelizeTemplate,
 } from '../../../templates/dataServices/node/sequelizeTemplates';
-import path from 'path';
+import { camelToPascal } from '../../../utils/stringUtils';
+import isEmpty from '../../../utils/utilityFunctions/isEmpty';
 
 const dataRegistry = DataRegistry.getInstance();
 export class SequelizeServiceBuilder {
@@ -30,8 +30,6 @@ export class SequelizeServiceBuilder {
     dataServicePath: string,
     typescriptPath: string,
   ): TemplateToBuild[] {
-    console.log('apiFolders');
-    console.log(apiFolders);
 
     apis.map((api) => {
       const table = dataRegistry.getTable(api.tableName);
@@ -202,7 +200,7 @@ export class SequelizeServiceBuilder {
     };
     return `
       ${enumImports()}
-      
+
       ${[...new Set(typesToCreate)].join('\n\n')}
     `;
   }

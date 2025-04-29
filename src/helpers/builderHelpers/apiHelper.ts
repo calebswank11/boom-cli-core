@@ -1,5 +1,17 @@
 import { APIAggregateData } from '../../@types';
+import { ApiTypesEnum } from '../../@types/constants';
+import { TreeStructureManager } from '../../controllers/directoryTools/TreeStructureManager';
+import { ConfigRegistry } from '../../registries/ConfigRegistry';
 import isEmpty from '../../utils/utilityFunctions/isEmpty';
+
+// Get the configuration registry at the top level
+const configRegistry = ConfigRegistry.getConfigInstance();
+const config = configRegistry.getConfig();
+const isGraphQL = config.apiType === ApiTypesEnum.graphql;
+const treeManager = new TreeStructureManager(config);
+
+// Define path levels based on API type
+const pathLevel = isGraphQL ? '../../../' : '../../';
 
 export const apiTypeParsers: Record<
   string,
@@ -53,29 +65,35 @@ export function buildImportsTemplate({
 }: APIAggregateData['imports']): string {
   let importTemplate = '';
   if (!isEmpty(enumImports)) {
-    importTemplate += `import {${enumImports.join(', ')}, ${(additionalEnumImports || []).join(', ')}} from '../../../../enums';`;
+    importTemplate += `import {${enumImports.join(', ')}, ${(additionalEnumImports || []).join(', ')}} from '${pathLevel}../enums';`;
   }
   if (!isEmpty(utilsImports)) {
     importTemplate += utilsImports
     .map(
       (utility) =>
-        `import ${utility} from '../../../utils/utilityFunctions/${utility}';`,
+        `import ${utility} from '${pathLevel}utils/utilityFunctions/${utility}';`,
     )
     .join('\n');
     if (!isEmpty(additionalUtilsImports)) {
       importTemplate += additionalUtilsImports
       .map(
         (utility) =>
-          `import ${utility} from '../../../utils/utilityFunctions/${utility}';`,
+          `import ${utility} from '${pathLevel}utils/utilityFunctions/${utility}';`,
       )
       .join('\n');
     }
   }
   if (!isEmpty(typeImports)) {
-    importTemplate += `import {${typeImports.join(', ')}, ${(additionalTypeImports || []).join(', ')}} from '../../../@types';`;
+    importTemplate += `import {${typeImports.join(', ')}, ${(additionalTypeImports || []).join(', ')}} from '${pathLevel}@types';`;
   }
   if (!isEmpty(serviceImports)) {
-    importTemplate += `import {${serviceImports.join(', ')}, ${(additionalServiceImports || []).join(', ')}} from '../../../dataServices';`;
+    // Get the API structure from the tree manager
+    const apiStructure = treeManager.getAPIStructure();
+
+    // Determine the correct import path based on the API type
+    const dataServicesPath = isGraphQL ? '../../../dataServices' : '../../dataServices';
+
+    importTemplate += `import {${serviceImports.join(', ')}, ${(additionalServiceImports || []).join(', ')}} from '${dataServicesPath}';`;
   }
   return importTemplate;
 }

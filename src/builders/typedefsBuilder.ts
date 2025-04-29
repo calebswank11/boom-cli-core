@@ -1,4 +1,4 @@
-import { TableStructureBase, TypedefsBase } from '../@types';
+import { GraphQLField, RelationshipType, TableStructureBase, TypedefsBase } from '../@types';
 import { typedefsTypeParsers } from '../helpers';
 import { snakeToCamel } from '../utils/stringUtils';
 
@@ -13,6 +13,7 @@ export const buildTypedefs = (tables: TableStructureBase[]): TypedefsBase[] => {
       fields: [],
     };
 
+    // Add regular columns
     Object.values(tableStructure.columns).map((tableColumn) => {
       // process columns
       graphQLFields.fields.push(
@@ -24,6 +25,54 @@ export const buildTypedefs = (tables: TableStructureBase[]): TypedefsBase[] => {
         ),
       );
     });
+
+    // Add relationship fields
+    if (tableStructure.relationships) {
+      tableStructure.relationships.forEach((relationship) => {
+        const fieldName = snakeToCamel(relationship.sourceColumn);
+        const targetType = snakeToCamel(relationship.targetTable);
+
+        switch (relationship.type) {
+          case RelationshipType.ONE_TO_ONE:
+            graphQLFields.fields.push({
+              key: fieldName,
+              type: GraphQLField.GraphQLObjectType,
+              nullable: true,
+              list: false,
+              targetType,
+            });
+            break;
+          case RelationshipType.ONE_TO_MANY:
+            graphQLFields.fields.push({
+              key: fieldName,
+              type: GraphQLField.GraphQLObjectType,
+              nullable: true,
+              list: true,
+              targetType,
+            });
+            break;
+          case RelationshipType.MANY_TO_MANY:
+            graphQLFields.fields.push({
+              key: fieldName,
+              type: GraphQLField.GraphQLObjectType,
+              nullable: true,
+              list: true,
+              targetType,
+            });
+            break;
+          case RelationshipType.MANY_TO_ONE:
+            graphQLFields.fields.push({
+              key: fieldName,
+              type: GraphQLField.GraphQLObjectType,
+              nullable: true,
+              list: false,
+              targetType,
+            });
+            break;
+        }
+      });
+    }
+
     typedefs.push(graphQLFields);
   });
   return typedefs;

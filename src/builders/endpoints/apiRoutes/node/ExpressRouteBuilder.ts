@@ -1,8 +1,8 @@
 import { RouteBase, TemplateToBuild } from '../../../../@types';
-import { DataRegistry } from '../../../../registries/DataRegistry';
 import { EndpointNameFactory } from '../../../../factories/endpoints/node/EndpointNameFactory';
-import { capitalizeFirstChar } from '../../../../utils/stringUtils';
 import { EndpointHttpMethodMap } from '../../../../helpers/builderHelpers/routerHelpers';
+import { DataRegistry } from '../../../../registries/DataRegistry';
+import { capitalizeFirstChar } from '../../../../utils/stringUtils';
 
 export class ExpressRouteBuilder {
   static buildRoutes(dataRegistry: DataRegistry): RouteBase[] {
@@ -74,7 +74,7 @@ export class ExpressRouteBuilder {
       const routesToUse = routes
         .map(
           (route) =>
-            `router.${EndpointHttpMethodMap[route.endpointType]}(\`\${basePath}/${route.functionName}\`, middleWareOrchestrator, ${route.functionName});`,
+            `router.${EndpointHttpMethodMap[route.endpointType]}(\`\${basePath}/${route.functionName}\`, middlewareOrchestrator, ${route.functionName});`,
         )
         .join('\n\n');
 
@@ -82,12 +82,12 @@ export class ExpressRouteBuilder {
         path: `${folder}/index.ts`,
         template: `
           import { Router } from 'express';
-          import { middleWareOrchestrator } from '../utils';
+          import { middlewareOrchestrator } from '../utils';
           ${imports}
-          
+
           export function build${capitalizeFirstChar(folder)}Routes(router: Router) {
             const basePath = \`\${process.env.API_ROOT}/${folder}\`;
-          
+
             ${routesToUse}
           }
         `,
@@ -101,11 +101,11 @@ export class ExpressRouteBuilder {
         template: `
           import { Router } from 'express';
           ${folders.map((folder) => `import { build${capitalizeFirstChar(folder)}Routes } from './${folder}';`).join('\n')}
-          
+
           const router = Router();
-          
+
           ${folders.map((folder) => `build${capitalizeFirstChar(folder)}Routes(router);`).join('\n\n')}
-          
+
           export default router;
         `,
       },

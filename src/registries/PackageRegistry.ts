@@ -1,9 +1,9 @@
 import fs from 'fs';
 import { PackageRegistryBase } from '../@types';
-import { ConfigRegistry } from './ConfigRegistry';
+import { FileCreator } from '../controllers/directoryTools/FileCreator';
 import { packageJsonConfig } from '../data/packageConfig';
 import { packageRegistryTemplate } from '../templates/packageJson';
-import { FileCreator } from '../controllers/directoryTools/FileCreator';
+import { ConfigRegistry } from './ConfigRegistry';
 
 export class PackageRegistryRegistry extends ConfigRegistry {
   private static instance: PackageRegistryRegistry;
@@ -23,7 +23,10 @@ export class PackageRegistryRegistry extends ConfigRegistry {
   }
 
   buildDefaultPackageRegistry() {
-    const config = this.getConfig();
+    // Initialize with default values
+    this.packageRegistry = this.defaultPackageRegistries();
+    this.saveToFile();
+    console.log('✅ Package registry initialized with default values');
   }
 
   private loadFromFile(): PackageRegistryBase | null {
@@ -63,6 +66,12 @@ export class PackageRegistryRegistry extends ConfigRegistry {
   async buildAndCreatePackage() {
     const config = this.getConfig();
     const fileCreator = new FileCreator();
+
+    // Make sure we have a valid package registry
+    if (!this.packageRegistry) {
+      this.buildDefaultPackageRegistry();
+    }
+
     const template = packageRegistryTemplate(this.packageRegistry);
     await fileCreator.createFile(`${config.root}/package.json`, template, 'json');
     console.log(`✅ package.json created at root`);

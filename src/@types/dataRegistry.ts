@@ -70,6 +70,14 @@ export interface TableRelationship {
   junctionTable?: string; // For many-to-many
   navigationPropertySource?: string; // Property name in source model
   navigationPropertyTarget?: string; // Property name in target model
+  onDelete?: 'CASCADE' | 'SET NULL' | 'RESTRICT' | 'NO ACTION';
+  onUpdate?: 'CASCADE' | 'SET NULL' | 'RESTRICT' | 'NO ACTION';
+  targetIndex?: {
+    name: string;
+    columns: string[];
+    unique: boolean;
+    method?: 'btree' | 'hash' | 'gin' | 'gist' | string | null;
+  };
 }
 
 export interface TableColumnTypeBase {

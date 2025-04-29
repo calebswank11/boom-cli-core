@@ -5,7 +5,7 @@ import {
   HelperFunction,
   ReadEndpointTypes,
   TemplateToBuild,
-  WriteEndpointTypes,
+  WriteEndpointTypes
 } from '../../../@types';
 import { ResponseTypeFactory } from '../../../factories/endpoints/node/ResponseTypeFactory';
 import { buildImportsTemplate } from '../../../helpers';
@@ -162,6 +162,30 @@ export class ExpressBuilder {
     `;
   }
 
+  /**
+   * Builds the include options for Sequelize queries based on relationships
+   */
+  buildIncludeOptions(tableName: string): string {
+    const dataRegistry = DataRegistry.getInstance();
+    const table = dataRegistry.getTable(tableName);
+
+    if (!table || !table.relationships || table.relationships.length === 0) {
+      return '[]';
+    }
+
+    const includeOptions = table.relationships.map(relationship => {
+      const targetModelName = `${relationship.targetTable.charAt(0).toUpperCase() + relationship.targetTable.slice(1)}Model`;
+
+      return `{
+        model: ${targetModelName},
+        as: '${relationship.navigationPropertySource}',
+        required: false
+      }`;
+    });
+
+    return `[${includeOptions.join(', ')}]`;
+  }
+
   buildCreateManyLogicTemplate(record: APIAggregateData): {
     logic: string;
     args: string;
@@ -261,7 +285,6 @@ export class ExpressBuilder {
         }
 
         res.status(200).json({
-          success: true,
           ids,
         });
       `,
@@ -271,14 +294,20 @@ export class ExpressBuilder {
     logic: string;
     args: string;
   } {
+    const includeOptions = this.buildIncludeOptions(record.typescript.tableName);
+
     return {
-      args: `const args = req.query;`,
+      args: 'const {limit = 10, offset = 0, sort = "id", ...filters} = req.query;',
       logic: `
-        ${this.buildRequiredArgsChecker(record)}
+        const records = await ${record.dataService.name}({
+          limit: Number(limit),
+          offset: Number(offset),
+          order: [[sort, 'ASC']],
+          where: filters,
+          include: ${includeOptions}
+        });
 
-        const record = await ${record.dataService.name}(args);
-
-        res.status(200).json(record);
+        res.status(200).json(records);
       `,
     };
   }
@@ -287,31 +316,32 @@ export class ExpressBuilder {
     args: string;
   } {
     return {
-      logic: `const count = await ${record.dataService.name}(${record.dataService.args});
+      args: 'const {...filters} = req.query;',
+      logic: `
+        const count = await ${record.dataService.name}(filters);
 
-        res.status(200).json({
-          count,
-        });
+        res.status(200).json({ count });
       `,
-      args: '',
     };
   }
   buildIdLogicTemplate(record: APIAggregateData): {
     logic: string;
     args: string;
   } {
+    const includeOptions = this.buildIncludeOptions(record.typescript.tableName);
+
     return {
+      args: 'const {id} = req.params;',
       logic: `
-        if (!id) {
-          return res.status(400).send({ success: false, message: 'Missing id param' });
+        const record = await ${record.dataService.name}(id, {
+          include: ${includeOptions}
+        });
+
+        if(!record) {
+          return res.status(404).send({ success: false, message: 'Record not found' });
         }
 
-        const record = await ${record.dataService.name}(${record.dataService.args});
-
         res.status(200).json(record);
-      `,
-      args: `
-        const {id} = req.query;
       `,
     };
   }

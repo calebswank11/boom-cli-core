@@ -89,6 +89,7 @@ const devDependencies = {
     eslint: 'latest',
     prettier: 'latest',
     '@faker-js/faker': '9.6.0',
+    '@types/cors': '^2.8.17',
     ts: {
       typescript: '^5.3.3',
       'ts-node': '^10.9.1',
