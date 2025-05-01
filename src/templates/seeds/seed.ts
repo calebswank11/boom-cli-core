@@ -86,7 +86,13 @@ const getFieldValue = (tableName: string, columnName: string) => {
   switch (columnType) {
     case SqlDataType.TEXT:
     case SqlDataType.VARCHAR:
-      return getFakerValue(tableColumn?.name || '');
+      if (tableColumn?.type.limit) {
+        if (tableColumn.default) {
+          return `'${tableColumn.default}'`;
+        }
+        return `faker.lorem.letters(${tableColumn?.type.limit})`;
+      }
+      return `faker.lorem.words()`;
     case SqlDataType.INT:
       return `faker.number.int({ min: 1, max: 1000 })`; // Generates a random integer
     case SqlDataType.BOOLEAN:
@@ -143,7 +149,7 @@ const knexSeedTemplate = (seeds: SeedBase[]) => {
         const ${reference.refTable}Data: (string | number)[] = await knex('${reference.refTable}').pluck('${reference.key}').limit(50);
       `;
         })
-        .join('\n')}      
+        .join('\n')}
         await seedTable('${seed.tableName}', Array.from({length: 25}, () => ({
           ${seed.fields.map((field) => `${field.column}: ${getFieldValue(seed.tableName, field.column)}`).join(',\n')}
         })));
@@ -160,7 +166,7 @@ import {
 import bcrypt from 'bcryptjs';
 
 exports.seed = async function (knex: Knex) {
-  
+
   async function seedTable(table: string, rows: any[]) {
     if (await shouldSeedData(knex, table)) {
       await knex(table).insert(rows);
@@ -187,7 +193,7 @@ const sequelizeSeedTemplate = (seeds: SeedBase[]) => {
         const ${reference.refTable}Data: (string | number)[] = await queryInterface.sequelize.query('SELECT id FROM ${reference.refTable} LIMIT 50');
       `;
         })
-        .join('\n')}      
+        .join('\n')}
         await seedTable(queryInterface, '${seed.tableName}', Array.from({length: 25}, () => ({
           ${seed.fields.map((field) => `${field.column}: ${getFieldValue(seed.tableName, field.column)}`).join(',\n')}
         })));
@@ -208,9 +214,9 @@ export default {
     ${builtSeeds.join('\n')}
   },
   down: async (queryInterface: QueryInterface) => {
-    
+
   }
-}  
+}
   `;
 };
 

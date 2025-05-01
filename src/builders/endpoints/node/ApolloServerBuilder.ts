@@ -11,7 +11,7 @@ import { ArgumentsFactory } from '../../../factories/endpoints/node/ArgumentsFac
 import { ResponseTypeFactory } from '../../../factories/endpoints/node/ResponseTypeFactory';
 import { buildImportsTemplate } from '../../../helpers';
 import { DataRegistry } from '../../../registries/DataRegistry';
-import { pascalToCamel, snakeToCamel } from '../../../utils/stringUtils';
+import { camelToPascal, snakeToCamel } from '../../../utils/stringUtils';
 
 export class ApolloServerBuilder {
   build(apiDict: APIAggregateDictionary): TemplateToBuild[] {
@@ -23,12 +23,15 @@ export class ApolloServerBuilder {
         console.error('API is not found, skipping');
         return;
       }
+
       Object.keys(apiDict[apiName]).map((method) => {
         const record = apiDict[apiName][method];
+        const argsType = `${camelToPascal(record.dataService.name)}Args`;
         const additionalImports = {
           utilsImports: [],
           enumImports: [],
-          typeImports: [`${pascalToCamel(record.functionName)}Args`],
+          // ignore args type for getById endpoints
+          typeImports: argsType.includes('ById') ? [] : [argsType],
           serviceImports: [],
         };
         switch (method) {
@@ -155,7 +158,6 @@ export class ApolloServerBuilder {
     });
     return templates;
   }
-
 
   buildWrapperFunctionTemplate(
     method: ReadEndpointTypes | WriteEndpointTypes | string,

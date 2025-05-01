@@ -1,23 +1,31 @@
 import fs from 'fs';
-import { TypedefsBase } from '../../@types';
-import { ConfigRegistry } from '../ConfigRegistry';
-import { mapItemToFolder } from '../../utils/folderUtils';
 import path from 'path';
+import { TypedefsBase } from '../../@types';
 import { FileCreator } from '../../controllers/directoryTools/FileCreator';
 import { FolderCreator } from '../../controllers/directoryTools/FolderCreator';
 import { graphqlTemplate } from '../../templates/models/graphql';
+import { mapItemToFolder } from '../../utils/folderUtils';
 import { logSectionHeader, logSectionHeaderError } from '../../utils/logs';
+import { snakeToCamel } from '../../utils/stringUtils';
+import { ConfigRegistry } from '../ConfigRegistry';
+
+interface TypedefInfo {
+  folder: string;
+  objectTypeName: string;
+}
 
 export class TypedefsRegistry extends ConfigRegistry {
   private static instance: TypedefsRegistry;
   private typedefs: TypedefsBase[];
   private TYPEDEFS_PATH: string;
+  private typedefInfo: Map<string, TypedefInfo>;
 
   private constructor() {
     super();
     this.typedefs = this.loadFromFile() || this.defaultTypedefs();
     this.TYPEDEFS_PATH =
       this.getRegistryDataPath('TYPEDEFS_REGISTRY_PATH') || './typedefs.json';
+    this.typedefInfo = new Map();
   }
 
   static getInstance(): TypedefsRegistry {
@@ -59,6 +67,15 @@ export class TypedefsRegistry extends ConfigRegistry {
   addTypedef(typedef: TypedefsBase) {
     this.typedefs.push(typedef);
     this.saveToFile();
+  }
+
+  setTypedefInfo(typedefName: string, folder: string) {
+    const objectTypeName = snakeToCamel(typedefName) + 'ObjectType';
+    this.typedefInfo.set(typedefName, { folder, objectTypeName });
+  }
+
+  getTypedefInfo(typedefName: string): TypedefInfo | undefined {
+    return this.typedefInfo.get(typedefName);
   }
 
   private saveToFile() {
@@ -103,6 +120,13 @@ export class TypedefsRegistry extends ConfigRegistry {
 
         const folderNames = Object.keys(typeDefsByFolder);
 
+        // Set folder information for each typedef
+        for (const [folder, typedefs] of Object.entries(typeDefsByFolder)) {
+          for (const typedef of typedefs) {
+            this.setTypedefInfo(typedef.name, folder);
+          }
+        }
+
         await Promise.all(
           folderNames.map(async (folder) => {
             await fileCreator.createFile(
@@ -117,7 +141,9 @@ export class TypedefsRegistry extends ConfigRegistry {
         );
         logSectionHeader(`✅ Typedefs created at ${filePath}`);
       } else {
-        logSectionHeaderError('⚠️ Typedefs not included, update config to build them!');
+        logSectionHeaderError(
+          '⚠️ Typedefs not included, update config to build them!',
+        );
       }
     }
   }

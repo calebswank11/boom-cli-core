@@ -1,5 +1,8 @@
 import { TableColumnStructureBase } from '../../../@types';
-import { sequelizeTypeHelper } from '../../../helpers/builderHelpers/sequelizeTypeHelper';
+import {
+  parseDefaultValue,
+  sequelizeTypeHelper,
+} from '../../../helpers/builderHelpers/sequelizeTypeHelper';
 
 export class SequelizeMigrationFactory {
   static getMigrationLine(tableColumn: TableColumnStructureBase) {
@@ -13,17 +16,21 @@ export class SequelizeMigrationFactory {
       sequelizeColObj += 'allowNull: false,';
     }
 
-    if (tableColumn.default) {
-      sequelizeColObj += `defaultValue: Sequelize.literal('${tableColumn.default}'),`;
+    if (tableColumn.default && !tableColumn.enumValues) {
+      try {
+        sequelizeColObj += `defaultValue: ${parseDefaultValue(tableColumn.default, tableColumn.enumValues)},`;
+      } catch (error) {
+        sequelizeColObj += `defaultValue: ${tableColumn.default},`;
+      }
     }
 
-    const seqType = sequelizeTypeHelper(tableColumn.type);
+    const seqType = sequelizeTypeHelper(tableColumn.type, tableColumn.enumValues);
     if (seqType) {
       sequelizeColObj += `type: ${seqType},`;
     }
 
     if (tableColumn.reference) {
-      sequelizeColObj += `references: { 
+      sequelizeColObj += `references: {
                   model: '${tableColumn.reference.tableName}',
                    key: '${tableColumn.reference.colName}'
                 },`;

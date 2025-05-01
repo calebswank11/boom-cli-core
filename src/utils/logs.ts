@@ -1,9 +1,10 @@
 import boxen from 'boxen';
 import chalk from 'chalk';
 import { version } from '../../package.json';
+import { ScaffoldingConfig } from '../@types';
 
 const logo = `
-   ___   ___ __        
+   ___   ___ __
   / _ ) / // __)
  / _ < /_/\\__\\
 /____/(_)(___/
@@ -25,6 +26,26 @@ export const logBreak = () => {
 export const logFinish = () => {
   console.log('>> Next Steps:');
   console.log(chalk.cyan('>> cd build && yarn && yarn dev'));
+};
+
+export const logNotes = (config: ScaffoldingConfig) => {
+  console.log(chalk.blueBright(`\n-- Notes --`));
+  console.log(chalk.blueBright(`- Name: ${config.project.name}`));
+  console.log(chalk.blueBright(`- Date: ${new Date().toISOString()}`));
+  console.log(chalk.blueBright(`- API Type: ${config.apiType}`));
+  console.log(chalk.blueBright(`- Library: ${config.library}`));
+  console.log(chalk.blueBright(`- ORM: ${config.orm}`));
+  if (config.apiType === 'graphql') {
+    console.log(
+      chalk.yellow(
+        'If your server errors out on start, check circular dependencies in typedefs. One file importing a typedef that imports another file importing the first file is a circular dependency',
+      ),
+    );
+  }
+};
+
+export const logRepoIssuesLink = () => {
+  console.log(chalk.grey('https://github.com/calebswank11/boom-cli-core/issues'));
 };
 
 export const logSectionHeader = (content: string) => {

@@ -12,7 +12,7 @@ import { ProcessSqlController } from './controllers/directoryTools/ProcessSqlCon
 import { TreeCreator } from './controllers/directoryTools/TreeCreator';
 import { TreeStructureManager } from './controllers/directoryTools/TreeStructureManager';
 import { ConfigRegistry } from './registries';
-import { logBreak, logBSInfo, logFinish, logLogo } from './utils/logs';
+import { logBreak, logBSInfo, logFinish, logNotes } from './utils/logs';
 
 dotenv.config();
 
@@ -30,7 +30,6 @@ const configRegistry = ConfigRegistry.getConfigInstance();
 
 export const boomScaffold = async (config: ScaffoldingConfig) => {
   try {
-    logLogo();
     if (process.env.NODE_ENV !== 'production') {
       console.time('B!S completion time');
     }
@@ -68,11 +67,8 @@ export const boomScaffold = async (config: ScaffoldingConfig) => {
     logBreak();
     logBSInfo();
     logBreak();
+    logNotes(config);
     logFinish();
-
-    // Force clear any remaining console output
-    console.clear();
-
   } catch (error) {
     console.error('');
     console.error('Process was interrupted because of an error.');

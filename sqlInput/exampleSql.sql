@@ -1,11 +1,4 @@
-CREATE TYPE industry_type_enum AS ENUM (
-  'school',
-  'non_profit',
-  'business',
-  'other'
-);
-
-CREATE TABLE user ( -- comment
+CREATE TABLE user (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   username VARCHAR(255) UNIQUE,
   email VARCHAR(255) UNIQUE,
@@ -13,25 +6,19 @@ CREATE TABLE user ( -- comment
   password_hash TEXT NOT NULL,
   image varchar(255),
   last_login timestamp
-  -- comment
 );
 
 CREATE TABLE participant (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID,
+  user_id UUID REFERENCES user(id) ON DELETE CASCADE,
   name VARCHAR(255),
   career_goals TEXT,
   education_level VARCHAR(255),
   expertise_area VARCHAR(255),
   years_experience INT,
   is_mentor BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT NOW());
-
-ALTER TABLE participant
-    ADD CONSTRAINT fk_participant_user
-        FOREIGN KEY (user_id)
-            REFERENCES user(id)
-            ON DELETE CASCADE;
+  created_at TIMESTAMP DEFAULT NOW()
+);
 
 CREATE TABLE organization (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -39,7 +26,7 @@ CREATE TABLE organization (
   phone VARCHAR(20),
   email VARCHAR(255) UNIQUE,
   code VARCHAR(50) UNIQUE,
-  industry_type industry_type_enum NOT NULL,
+  industry_type ENUM('school', 'non_profit', 'business', 'other') NOT NULL,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -329,28 +316,6 @@ CREATE TABLE pbp_monkey_wrench (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- AI-generated career opportunity recommendations
-CREATE TABLE pbp_opportunity_recommendation (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  pbp_id UUID REFERENCES pbp(id) ON DELETE CASCADE,
-  title VARCHAR(255) NOT NULL,
-  industry VARCHAR(255),
-  salary_min INT,
-  salary_max INT,
-  salary_median INT,
-  growth_rate FLOAT,
-  education_level_required VARCHAR(255),
-  experience_required INT,
-  skills_required TEXT,
-  remote_friendly BOOLEAN DEFAULT FALSE,
-  certification_required BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT NOW(),
-  CONSTRAINT check_salary_pbp CHECK (
-  (salary_min IS NULL AND salary_max IS NULL) OR
-  (salary_min <= salary_max)
-  )
-);
-
 CREATE TABLE matrix_user (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES user(id) ON DELETE CASCADE,
@@ -398,6 +363,60 @@ CREATE TABLE office_hours (
   status ENUM('scheduled', 'cancelled', 'completed') DEFAULT 'scheduled',
   cancelled_by ENUM('mentor', 'participant') DEFAULT NULL,
   created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TYPE courseStatusMeta_enum AS ENUM ('draft', 'published', 'archived');
+CREATE TYPE courseLevelMeta_enum AS ENUM ('beginner', 'intermediate', 'advanced', 'professional');
+CREATE TYPE courseOriginMeta_enum AS ENUM ('organization', 'location');
+CREATE TYPE courseAttachmentTypeMeta_enum AS ENUM ('pdf', 'image', 'link');
+
+CREATE TABLE course (
+  id UUID PRIMARY KEY,
+  organization_id UUID REFERENCES organization(id),
+  location_id UUID REFERENCES location(id),
+  origin courseOriginMeta_enum,
+  created_by UUID REFERENCES user(id),
+  name TEXT NOT NULL,
+  description TEXT,
+  level courseLevelMeta_enum,
+  status courseStatusMeta_enum,
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now(),
+  deleted_at TIMESTAMP,
+
+  CONSTRAINT course_created_by_foreign FOREIGN KEY (created_by) REFERENCES user(id),
+  CONSTRAINT course_location_id_foreign FOREIGN KEY (location_id) REFERENCES location(id),
+  CONSTRAINT course_organization_id_foreign FOREIGN KEY (organization_id) REFERENCES organization(id)
+);
+
+CREATE TABLE course_assignment (
+  id UUID PRIMARY KEY,
+  course_id UUID NOT NULL REFERENCES course(id),
+  due_date DATE,
+  title TEXT NOT NULL,
+  description TEXT,
+  created_by UUID REFERENCES user(id),
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now(),
+  deleted_at TIMESTAMP,
+
+  CONSTRAINT course_assignment_course_id_foreign FOREIGN KEY (course_id) REFERENCES course(id),
+  CONSTRAINT course_assignment_created_by_foreign FOREIGN KEY (created_by) REFERENCES user(id)
+);
+
+CREATE TABLE course_location (
+  id UUID PRIMARY KEY,
+  location_id UUID REFERENCES location(id),
+  course_id UUID REFERENCES course(id),
+  enabled BOOLEAN DEFAULT TRUE,
+  start_date DATE,
+  end_date DATE,
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now(),
+  deleted_at TIMESTAMP,
+
+  CONSTRAINT course_location_course_id_foreign FOREIGN KEY (course_id) REFERENCES course(id),
+  CONSTRAINT course_location_location_id_foreign FOREIGN KEY (location_id) REFERENCES location(id)
 );
 
 CREATE TABLE notification (
@@ -698,3 +717,9 @@ CREATE INDEX idx_ai_metric_last_used ON ai_metric(last_used);
 CREATE INDEX idx_chat_metric_org ON chat_metric(organization_id);
 CREATE INDEX idx_chat_metric_user ON chat_metric(user_id);
 CREATE INDEX idx_chat_metric_last_active ON chat_metric(last_active);
+
+-- Course
+CREATE INDEX course_location_id_index ON course_location(id);
+CREATE INDEX course_assignment_id_index ON course_assignment(id);
+CREATE INDEX course_assignment_id_index ON course_assignment(id);
+CREATE INDEX course_id_index ON course(id);

@@ -12,7 +12,7 @@ export const sequelizeMigrationsTemplate = ({
   enumPath,
   name,
 }: MigrationsBase & { enumPath: string; name: string }) => `
-import { QueryInterface, Sequelize } from 'sequelize';
+import { QueryInterface, Sequelize, DataTypes } from 'sequelize';
 import {
   buildDefaults,
   DROP_ON_UPDATE_TIMESTAMP_FUNCTION,
@@ -23,20 +23,20 @@ import {
 } from '${enumPath}'
 
 export default {
-  async up(queryInterface: QueryInterface) { 
+  async up(queryInterface: QueryInterface) {
     console.log('Migrating ${name}');
     await queryInterface.sequelize.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
     await queryInterface.sequelize.query(ON_UPDATE_TIMESTAMP_FUNCTION);
-    
+
     ${enumsToImport.map((e) => baseEnumObject(e)).join(' ')}
-    
+
     ${tablesToCreate.join('\n')}
-    
+
   },
   async down(queryInterface: QueryInterface) {
     ${tablesToDrop.map((table) => `await queryInterface.dropTable('${table}');`).join('\n')}
     ${enumsToCreate.map((e) => `await queryInterface.sequelize.query(\`DROP TYPE IF EXISTS "${e}_enum";\`);`).join('')}
-    
+
   }
 }
 

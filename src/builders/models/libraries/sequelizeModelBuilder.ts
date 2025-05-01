@@ -4,13 +4,17 @@ import {
   TableStructureBase,
   TemplateToBuild
 } from '../../../@types';
-import { sequelizeTypeHelper } from '../../../helpers/builderHelpers/sequelizeTypeHelper';
+import {
+  parseDefaultValue,
+  sequelizeTypeHelper,
+} from '../../../helpers/builderHelpers/sequelizeTypeHelper';
+import { pascalToCamel } from '../../../utils/stringUtils';
 
 export class SequelizeModelBuilder {
   static build(tables: TableStructureBase[]): TemplateToBuild[] {
     // First, create a map of table names to their models for relationship references
     const tableModelMap = new Map<string, string>();
-    tables.forEach(table => {
+    tables.forEach((table) => {
       tableModelMap.set(table.name, `${table.pascalCase}Model`);
     });
 
@@ -40,7 +44,7 @@ export class SequelizeModelBuilder {
         }
 
         if (column.default) {
-          modelObj += `defaultValue: Sequelize.literal('${column.default}'),\n`;
+          modelObj += `defaultValue: ${parseDefaultValue(column.default, column.enumValues)},\n`;
         }
 
         if (column.reference && column.reference.tableName) {
@@ -82,20 +86,23 @@ export class SequelizeModelBuilder {
       };
 
       // Generate relationship associations
-      const associations = this.generateAssociations(table, tableModelMap);
+      const { imports, associations } = this.generateAssociations(
+        table,
+        tableModelMap,
+      );
 
       return {
         template: `
         import {Sequelize, DataTypes} from 'sequelize';
-        import { getSequelize } from '../../database/connectToDB';
-
+        import { getSequelize } from '../database/connectToDB';
+        ${this.generateImportStatements(imports)}
         const sequelize = getSequelize();
 
         export const ${modelName} = sequelize.define('${modelName}', {${modelAttributes.join(',\n')}}, ${JSON.stringify(modelConfig, null, 2)});
 
-        // Define associations
-        ${associations}
-
+        /* Define associations
+         ${associations}
+         */
         `,
         path: `${table.camelCase}`,
       };
@@ -109,53 +116,57 @@ export class SequelizeModelBuilder {
    */
   private static generateAssociations(
     table: TableStructureBase,
-    tableModelMap: Map<string, string>
-  ): string {
+    tableModelMap: Map<string, string>,
+  ): { imports: string[]; associations: string } {
     if (!table.relationships || table.relationships.length === 0) {
-      return '';
+      return { imports: [], associations: '' };
     }
-
+    const imports: string[] = [];
     const associations: string[] = [];
 
-    table.relationships.forEach(relationship => {
+    table.relationships.forEach((relationship) => {
       const targetModelName = tableModelMap.get(relationship.targetTable);
       if (!targetModelName) return;
 
       switch (relationship.type) {
         case RelationshipType.ONE_TO_ONE:
+          imports.push(`${targetModelName}`);
           associations.push(
             `${table.pascalCase}Model.belongsTo(${targetModelName}, {
               foreignKey: '${relationship.sourceColumn}',
               as: '${relationship.navigationPropertySource}',
               onDelete: '${relationship.onDelete || 'NO ACTION'}',
               onUpdate: '${relationship.onUpdate || 'NO ACTION'}'
-            });`
+            });`,
           );
           break;
 
         case RelationshipType.ONE_TO_MANY:
+          imports.push(`${targetModelName}`);
           associations.push(
             `${table.pascalCase}Model.hasMany(${targetModelName}, {
               foreignKey: '${relationship.sourceColumn}',
               as: '${relationship.navigationPropertySource}',
               onDelete: '${relationship.onDelete || 'NO ACTION'}',
               onUpdate: '${relationship.onUpdate || 'NO ACTION'}'
-            });`
+            });`,
           );
           break;
 
         case RelationshipType.MANY_TO_ONE:
+          imports.push(`${targetModelName}`);
           associations.push(
             `${table.pascalCase}Model.belongsTo(${targetModelName}, {
               foreignKey: '${relationship.sourceColumn}',
               as: '${relationship.navigationPropertySource}',
               onDelete: '${relationship.onDelete || 'NO ACTION'}',
               onUpdate: '${relationship.onUpdate || 'NO ACTION'}'
-            });`
+            });`,
           );
           break;
 
         case RelationshipType.MANY_TO_MANY:
+          imports.push(`${targetModelName}`);
           if (relationship.junctionTable) {
             const junctionTableName = relationship.junctionTable;
             associations.push(
@@ -164,13 +175,25 @@ export class SequelizeModelBuilder {
                 foreignKey: '${relationship.sourceColumn}',
                 otherKey: '${relationship.targetColumn}',
                 as: '${relationship.navigationPropertySource}'
-              });`
+              });`,
             );
           }
           break;
       }
     });
 
-    return associations.join('\n\n');
+    return { imports, associations: associations.join('\n\n') };
+  }
+
+  private static generateImportStatements(imports: string[]): string {
+    if (imports.length === 0) return '';
+
+    const uniqueImports = [...new Set(imports)];
+    return uniqueImports
+      .map((importName) => {
+        // Import from the same directory level
+        return `import { ${importName} } from './${pascalToCamel(importName.replace('Model', ''))}';`;
+      })
+      .join('\n');
   }
 }

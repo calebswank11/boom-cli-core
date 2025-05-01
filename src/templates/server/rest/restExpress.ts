@@ -5,6 +5,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { Sequelize } from 'sequelize';
 import routes from './routes';
+import { initializeModels } from './models';
 
 // Determine environment
 const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
@@ -35,7 +36,7 @@ app.use(cors({ credentials: false, origin: '*' }));
 app.use(express.json());
 
 // Routes
-app.use('/api', routes);
+app.use(process.env.API_ROOT || '/api', routes);
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -46,15 +47,24 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 // Start Server
 const PORT = process.env.PORT || 4000;
 
-// Test database connection and start server
-sequelize.authenticate()
-  .then(() => {
-    console.log('Database connection has been established successfully.');
+// Initialize models and start server
+const startServer = async () => {
+  try {
+    // Initialize models
+    const modelsInitialized = await initializeModels();
+    if (!modelsInitialized) {
+      throw new Error('Failed to initialize models');
+    }
+
+    // Start the server
     app.listen(PORT, () => {
       console.log(\`🚀 Server running at http://localhost:\${PORT}/api\`);
     });
-  })
-  .catch(err => {
-    console.error('Unable to connect to the database:', err);
-  });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
 `;

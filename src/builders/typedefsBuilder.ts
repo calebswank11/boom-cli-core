@@ -1,4 +1,4 @@
-import { GraphQLField, RelationshipType, TableStructureBase, TypedefsBase } from '../@types';
+import { TableStructureBase, TypedefsBase } from '../@types';
 import { typedefsTypeParsers } from '../helpers';
 import { snakeToCamel } from '../utils/stringUtils';
 
@@ -16,6 +16,14 @@ export const buildTypedefs = (tables: TableStructureBase[]): TypedefsBase[] => {
     // Add regular columns
     Object.values(tableStructure.columns).map((tableColumn) => {
       // process columns
+      if (tableColumn.name.includes('_id')) {
+        const nameBase = tableColumn.name.replace('_id', '');
+        graphQLFields.fields.push({
+          key: nameBase,
+          type: snakeToCamel(`${nameBase}_object_type`),
+          nullable: true,
+        });
+      }
       graphQLFields.fields.push(
         typedefsTypeParsers[tableColumn.type.name](
           tableColumn.name,
@@ -27,51 +35,51 @@ export const buildTypedefs = (tables: TableStructureBase[]): TypedefsBase[] => {
     });
 
     // Add relationship fields
-    if (tableStructure.relationships) {
-      tableStructure.relationships.forEach((relationship) => {
-        const fieldName = snakeToCamel(relationship.sourceColumn);
-        const targetType = snakeToCamel(relationship.targetTable);
+    // if (tableStructure.relationships) {
+    //   tableStructure.relationships.forEach((relationship) => {
+    //     const fieldName = snakeToCamel(relationship.sourceColumn);
+    //     const targetType = snakeToCamel(relationship.targetTable);
 
-        switch (relationship.type) {
-          case RelationshipType.ONE_TO_ONE:
-            graphQLFields.fields.push({
-              key: fieldName,
-              type: GraphQLField.GraphQLObjectType,
-              nullable: true,
-              list: false,
-              targetType,
-            });
-            break;
-          case RelationshipType.ONE_TO_MANY:
-            graphQLFields.fields.push({
-              key: fieldName,
-              type: GraphQLField.GraphQLObjectType,
-              nullable: true,
-              list: true,
-              targetType,
-            });
-            break;
-          case RelationshipType.MANY_TO_MANY:
-            graphQLFields.fields.push({
-              key: fieldName,
-              type: GraphQLField.GraphQLObjectType,
-              nullable: true,
-              list: true,
-              targetType,
-            });
-            break;
-          case RelationshipType.MANY_TO_ONE:
-            graphQLFields.fields.push({
-              key: fieldName,
-              type: GraphQLField.GraphQLObjectType,
-              nullable: true,
-              list: false,
-              targetType,
-            });
-            break;
-        }
-      });
-    }
+    //     switch (relationship.type) {
+    //       case RelationshipType.ONE_TO_ONE:
+    //         graphQLFields.fields.push({
+    //           key: fieldName,
+    //           type: GraphQLField.GraphQLObjectType,
+    //           nullable: true,
+    //           list: false,
+    //           targetType,
+    //         });
+    //         break;
+    //       case RelationshipType.ONE_TO_MANY:
+    //         graphQLFields.fields.push({
+    //           key: fieldName,
+    //           type: GraphQLField.GraphQLObjectType,
+    //           nullable: true,
+    //           list: true,
+    //           targetType,
+    //         });
+    //         break;
+    //       case RelationshipType.MANY_TO_MANY:
+    //         graphQLFields.fields.push({
+    //           key: fieldName,
+    //           type: GraphQLField.GraphQLObjectType,
+    //           nullable: true,
+    //           list: true,
+    //           targetType,
+    //         });
+    //         break;
+    //       case RelationshipType.MANY_TO_ONE:
+    //         graphQLFields.fields.push({
+    //           key: fieldName,
+    //           type: GraphQLField.GraphQLObjectType,
+    //           nullable: true,
+    //           list: false,
+    //           targetType,
+    //         });
+    //         break;
+    //     }
+    //   });
+    // }
 
     typedefs.push(graphQLFields);
   });

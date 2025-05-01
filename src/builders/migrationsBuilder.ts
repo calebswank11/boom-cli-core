@@ -7,12 +7,12 @@ import {
   TableStructureBase,
   TableStructureByFile,
 } from '../@types';
-import { snakeToCamel } from '../utils/stringUtils';
 import { MigrationFactory } from '../factories/migrations/MigrationFactory';
 import {
   KnexMigrationFactory,
   SequelizeMigrationFactory,
 } from '../factories/migrations/node';
+import { snakeToCamel } from '../utils/stringUtils';
 
 type MigrationsObject = {
   tablesToCreate: string[];
@@ -163,11 +163,25 @@ const sequelizeMigrationBuilder = (
   const migrationFactory = MigrationFactory.getMigrationFactory(
     ORMEnum.sequelize,
   ) as typeof SequelizeMigrationFactory;
-  const migration = {
+  const migration: {
+    tableToCreate: string;
+    enumsToCreate: string[];
+    enumsToImport: string[];
+  } = {
     tableToCreate: `await queryInterface.createTable('${tableStructure.name}', {\n`,
+    enumsToCreate: [],
+    enumsToImport: [],
   };
   const lines: string[] = [];
   columns.map((tableColumn) => {
+    if (tableColumn.enumValues) {
+      migration.enumsToCreate.push(
+        `CREATE TYPE "${tableColumn.type.enumName}" AS ENUM (${(tableColumn.enumValues || []).map((value) => `'${value}'`).join(',')})`,
+      );
+      if (tableColumn.type.enumName) {
+        migrations.enumsToImport.push(tableColumn.type.enumName);
+      }
+    }
     lines.push(migrationFactory.getMigrationLine(tableColumn));
   });
 
@@ -196,6 +210,8 @@ const sequelizeMigrationBuilder = (
   migration.tableToCreate += lines.join(',\n');
   migration.tableToCreate += `}, ${JSON.stringify(tableConfig, null, 2)});\n`;
   migrations.tablesToCreate.push(migration.tableToCreate);
+  migrations.enumsToCreate.push(...migration.enumsToCreate);
+  migrations.enumsToImport.push(...migration.enumsToImport);
   migrations.tablesToDrop.push(tableStructure.name);
 };
 

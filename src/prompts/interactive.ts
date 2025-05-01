@@ -32,7 +32,7 @@ export async function runInteractivePrompts(
       {
         type: 'list',
         name: CLIOptionsRoot.orm,
-        message: 'Which ORM would you like to use?',
+        message: 'Which ORM would you like to use? (knex & Sequelize are supported)',
         choices: ORMs,
       },
     ]);
@@ -57,7 +57,7 @@ export async function runInteractivePrompts(
       {
         type: 'list',
         name: CLIOptionsRoot.library,
-        message: 'Which API uiLibrary?',
+        message: 'Which API uiLibrary? (Express & Apollo Server are supported)',
         choices: choices(),
       },
     ]);
@@ -69,7 +69,7 @@ export async function runInteractivePrompts(
       {
         type: 'list',
         name: CLIOptionsRoot.frontend,
-        message: 'Include Frontend hooks?',
+        message: 'Include Frontend hooks? (React & SolidJS are supported)',
         choices: ['no', ...Frameworks],
       },
     ]);

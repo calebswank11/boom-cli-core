@@ -1,6 +1,8 @@
+import { LibrariesEnum } from '../../../@types';
 import { ConfigRegistry } from '../../../registries';
 import { graphqlExpressTemplate } from '../../../templates/server/graphql/graphqlExpress';
 import { restExpressTemplate } from '../../../templates/server/rest/restExpress';
+import { restNestJSTemplate } from '../../../templates/server/rest/restNestJS';
 import { FileCreator } from '../FileCreator';
 
 const configRegistry = ConfigRegistry.getConfigInstance();
@@ -16,7 +18,16 @@ export const buildAndCreateServer = async () => {
     serverTemplate = graphqlExpressTemplate;
   } else {
     // For REST API
-    serverTemplate = restExpressTemplate;
+    switch (config.library) {
+      case LibrariesEnum.express:
+        serverTemplate = restExpressTemplate;
+        break;
+      case LibrariesEnum.nestjs:
+        serverTemplate = restNestJSTemplate;
+        break;
+      default:
+        throw new Error(`Unsupported library: ${config.library}`);
+    }
   }
 
   await fileCreator.createFile(

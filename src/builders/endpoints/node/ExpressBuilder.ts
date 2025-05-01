@@ -18,15 +18,23 @@ export class ExpressBuilder {
   build(apiDict: APIAggregateDictionary): TemplateToBuild[] {
     const dataRegistry = DataRegistry.getInstance();
     const templates: TemplateToBuild[] = [];
+    const rootImports: string[] = [];
+    const controllerImports: Record<string, string[]> = {};
     Object.keys(apiDict).map((apiName) => {
       const api = dataRegistry.getApi(apiName);
       if (!api) {
         console.error('API is not found, skipping');
         return;
       }
+      // initialize the controllerImports array for the current api
+      if (!controllerImports[api.folders.parent]) {
+        controllerImports[api.folders.parent] = [];
+      }
+
       Object.keys(apiDict[apiName]).map((method) => {
         const record = apiDict[apiName][method];
-
+        // add the function name to the controllerImports array for the current api
+        controllerImports[api.folders.parent].push(record.functionName);
         const templateToBuild = {
           path: `${api.folders.parent}/${record.functionName}.ts`,
           template: `${buildImportsTemplate(record.imports, {
@@ -70,6 +78,23 @@ export class ExpressBuilder {
         }
         templates.push(templateToBuild);
       });
+      // add the root controllerImports for controller/index.ts
+      rootImports.push(api.folders.parent);
+    });
+
+    Object.keys(controllerImports).map((folder) => {
+      templates.push({
+        path: `${folder}/index.ts`,
+        template: [...new Set(controllerImports[folder])]
+          .map((i) => `export * from './${i}';`)
+          .join('\n'),
+      });
+    });
+    templates.push({
+      path: 'index.ts',
+      template: [...new Set(rootImports)]
+        .map((i) => `export * from './${i}';`)
+        .join('\n'),
     });
 
     return templates;
@@ -120,7 +145,7 @@ export class ExpressBuilder {
 
         return `
           const ${constName} = await Promise.all(
-            args.map(async ({ ${args} }) => {
+            args.map(async ({ ${args} }: any) => {
               ${dynamicNullCheck()}
               const record = await ${functionName}(${args});
               if (record) {
@@ -267,7 +292,7 @@ export class ExpressBuilder {
         }
 
         res.status(200).json({
-          id,
+          success: true
         });
       `,
     };
@@ -280,12 +305,12 @@ export class ExpressBuilder {
       args: 'const {ids} = req.body;',
       logic: `const deletedRecords = await ${record.dataService.name}(ids);
 
-        if(!deletedRecords || deletedRecords.length === 0) {
+        if(!deletedRecords || deletedRecords.success) {
           return res.status(400).send({ success: false, message: 'failed to delete records' })
         }
 
         res.status(200).json({
-          ids,
+          success: true
         });
       `,
     };
@@ -298,14 +323,20 @@ export class ExpressBuilder {
 
     return {
       args: 'const {limit = 10, offset = 0, sort = "id", ...filters} = req.query;',
+      // logic: `
+      //   const records = await ${record.dataService.name}({
+      //     limit: Number(limit),
+      //     offset: Number(offset),
+      //     order: [[sort, 'ASC']],
+      //     where: filters,
+      //     include: ${includeOptions}
+      //   });
+
+      //   res.status(200).json(records);
+      // `,
       logic: `
-        const records = await ${record.dataService.name}({
-          limit: Number(limit),
-          offset: Number(offset),
-          order: [[sort, 'ASC']],
-          where: filters,
-          include: ${includeOptions}
-        });
+        // @ts-ignore
+        const records = await ${record.dataService.name}(req.query);
 
         res.status(200).json(records);
       `,
@@ -317,8 +348,9 @@ export class ExpressBuilder {
   } {
     return {
       args: 'const {...filters} = req.query;',
+      // const count = await ${record.dataService.name}(filters);
       logic: `
-        const count = await ${record.dataService.name}(filters);
+        const count = await ${record.dataService.name}();
 
         res.status(200).json({ count });
       `,
@@ -333,9 +365,7 @@ export class ExpressBuilder {
     return {
       args: 'const {id} = req.params;',
       logic: `
-        const record = await ${record.dataService.name}(id, {
-          include: ${includeOptions}
-        });
+        const record = await ${record.dataService.name}(id);
 
         if(!record) {
           return res.status(404).send({ success: false, message: 'Record not found' });

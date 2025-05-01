@@ -52,7 +52,7 @@ export enum GraphQLField {
 
 export interface GraphQLFieldTypeBase {
   key: string;
-  type: GraphQLField;
+  type: GraphQLField | string;
   nullable?: boolean;
   list?: boolean;
   targetType?: string;

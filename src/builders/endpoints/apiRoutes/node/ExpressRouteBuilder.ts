@@ -64,12 +64,8 @@ export class ExpressRouteBuilder {
 
     const folderRouters = Object.keys(routeDictionary).map((folder) => {
       const routes = routeDictionary[folder];
-      const imports = routes
-        .map(
-          (route) =>
-            `import { ${route.functionName} } from '../../controllers/${folder}/${route.functionName}';`,
-        )
-        .join('\n');
+      const importsItems = [...new Set(routes.map((route) => route.functionName))];
+      const imports = `import { ${importsItems.join(',\n')} } from '../../controllers';`;
 
       const routesToUse = routes
         .map(
@@ -86,7 +82,7 @@ export class ExpressRouteBuilder {
           ${imports}
 
           export function build${capitalizeFirstChar(folder)}Routes(router: Router) {
-            const basePath = \`\${process.env.API_ROOT}/${folder}\`;
+            const basePath = '/${folder}';
 
             ${routesToUse}
           }

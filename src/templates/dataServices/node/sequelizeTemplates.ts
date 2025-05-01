@@ -8,7 +8,7 @@ export const findManySequelizeTemplate = (
   return `
     export const ${functionName} = async (args: ${camelToPascal(functionName + 'Args')}[]): Promise<${api.responseType}[] | undefined> => {
       try {
-        return ${snakeToPascalCase(api.tableName)}Model.findAll({where: {[Op.or]: args}});
+        return (await ${snakeToPascalCase(api.tableName)}Model.findAll({where: {[Op.or]: args}})) as unknown as ${api.responseType}[];
       } catch (error) {
         console.error(error);
         return undefined;
@@ -24,7 +24,8 @@ export const findByIdSequelizeTemplate = (
   return `
     export const ${functionName} = async (id: string): Promise<${api.responseType} | undefined> => {
       try {
-        return ${snakeToPascalCase(api.tableName)}Model.findOne({where: {id}});
+        const result = await ${snakeToPascalCase(api.tableName)}Model.findOne({where: {id}});
+        return result ? (result as unknown as ${api.responseType}) : undefined;
       } catch (error) {
         console.error(error);
         return undefined;
@@ -42,15 +43,15 @@ export const createManySequelizeTemplate = (
         console.error('Args were empty for ${functionName}')
         return undefined;
       }
-      
+
       return runTransaction<${api.responseType}[]>(async (transaction) => {
         const records = await ${snakeToPascalCase(api.tableName)}Model.bulkCreate(args, {transaction, returning: true});
-        
+
         if(!records.length) {
           throw new Error('There was an error creating records for ${functionName}')
         }
-        
-        return records;
+
+        return records as unknown as ${api.responseType}[];
       });
     }
   `;
@@ -61,15 +62,15 @@ export const createSequelizeTemplate = (
 ): string => {
   return `
     export const ${functionName} = async (args: ${camelToPascal(functionName + 'Args')}): Promise<${api.responseType} | undefined> => {
-    
+
       return runTransaction<${api.responseType}>(async (transaction) => {
         const record = await ${snakeToPascalCase(api.tableName)}Model.create(args, {transaction, returning: true});
-        
+
         if(!record) {
           throw new Error('There was an error creating a record for ${functionName}')
         }
-        
-        return record;
+
+        return record as unknown as ${api.responseType};
       });
     }
   `;
@@ -84,19 +85,19 @@ export const updateManySequelizeTemplate = (
         console.error('Args were empty for ${functionName}')
         return undefined;
       }
-      
+
       return runTransaction<${api.responseType}[]>(async (transaction) => {
         const records = await ${snakeToPascalCase(api.tableName)}Model.bulkCreate(args, {transaction, returning: true, updateOnDuplicate: [${Object.values(
           api.args,
         )
           .map((arg) => `'${arg.name}'`)
           .join(',')}]});
-        
+
         if (!records.length) {
           throw new Error('There was an error updating records for ${functionName}')
         }
-        
-        return records;
+
+        return records as unknown as ${api.responseType}[];
       })
     }
   `;
@@ -107,20 +108,20 @@ export const updateSequelizeTemplate = (
 ): string => {
   return `
     export const ${functionName} = async (args: ${camelToPascal(functionName + 'Args')}): Promise<${api.responseType} | undefined> => {
-    
+
       return runTransaction<${api.responseType}>(async (transaction) => {
         const [updCount, result] = await ${snakeToPascalCase(api.tableName)}Model.update(args, {
             transaction,
             where: { id: args.id },
             returning: true,
         });
-        
+
         if(updCount === 0) {
           throw new Error('No records updated for ${functionName}');
         }
-        
-        return result?.[0];
-      
+
+        return result?.[0] as unknown as ${api.responseType};
+
       })
     }`;
 };
@@ -151,13 +152,13 @@ export const deleteSequelizeTemplate = (
             id,
           }, transaction}
         );
-        
+
         if(!deleted) {
           throw new Error('No record deleted for the provided id');
         }
         return {success: false}
       })
-     
+
     }
   `;
 };
@@ -167,7 +168,7 @@ export const deleteManySequelizeTemplate = (
 ): string => {
   return `
     export const ${functionName} = async (ids: string[]):Promise<{success: boolean}> => {
-    
+
       return runTransaction<{success: boolean}>(async (transaction) => {
         const deleted = await ${snakeToPascalCase(api.tableName)}Model.destroy({
           where: {
@@ -175,14 +176,14 @@ export const deleteManySequelizeTemplate = (
               [Op.in]: ids
             }
           }, transaction}
-        );   
-        
+        );
+
         if (deleted !== ids.length) {
           throw new Error('Not all records were deleted');
         }
-    
+
         return { success: true };
-        
+
       });
     }
   `;

@@ -8,7 +8,6 @@ export class FileCreator {
   private directoryCounts: Map<string, number> = new Map();
   private directoryLoaders: Map<string, ReturnType<typeof ora>> = new Map();
   private currentDirectory: string | null = null;
-  private isProcessing: boolean = false;
 
   private getDirectoryFromPath(filePath: string): string {
     return path.dirname(filePath);
@@ -22,8 +21,6 @@ export class FileCreator {
   }
 
   private updateDirectoryCount(directory: string) {
-    if (!this.isProcessing) return;
-
     const currentCount = this.directoryCounts.get(directory) || 0;
     this.directoryCounts.set(directory, currentCount + 1);
 
@@ -35,17 +32,15 @@ export class FileCreator {
   }
 
   private startDirectoryLoader(directory: string) {
-    if (!this.isProcessing) return;
-
     if (!this.directoryLoaders.has(directory)) {
-      const loader = ora(`${directory}: ${this.getColoredCount(0)} files generated`).start();
+      const loader = ora(
+        `${directory}: ${this.getColoredCount(0)} files generated`,
+      ).start();
       this.directoryLoaders.set(directory, loader);
     }
   }
 
   private stopDirectoryLoader(directory: string) {
-    if (!this.isProcessing) return;
-
     const loader = this.directoryLoaders.get(directory);
     if (loader) {
       const count = this.directoryCounts.get(directory) || 0;
@@ -59,7 +54,9 @@ export class FileCreator {
     // Stop all active loaders
     for (const [directory, loader] of this.directoryLoaders.entries()) {
       try {
-        loader.succeed(`${directory}: ${this.directoryCounts.get(directory)} files generated`);
+        loader.succeed(
+          `${directory}: ${this.directoryCounts.get(directory)} files generated`,
+        );
       } catch (e) {
         // Ignore errors during cleanup
       }
@@ -69,7 +66,6 @@ export class FileCreator {
     this.directoryLoaders.clear();
     this.directoryCounts.clear();
     this.currentDirectory = null;
-    this.isProcessing = false;
   }
 
   async createOrAppendFile(
@@ -78,10 +74,6 @@ export class FileCreator {
     formatType?: string,
     cleanupFunction?: (prevContent: string, newContent: string) => string,
   ) {
-    if (!this.isProcessing) {
-      this.isProcessing = true;
-    }
-
     try {
       const directory = this.getDirectoryFromPath(filePath);
 
@@ -123,10 +115,6 @@ export class FileCreator {
   }
 
   async createFile(filePath: string, content: string, formatType?: string) {
-    if (!this.isProcessing) {
-      this.isProcessing = true;
-    }
-
     try {
       const formattedTemplate = await formatCode(content, formatType);
       const pathWithBase = path.join(filePath);
@@ -144,8 +132,6 @@ export class FileCreator {
       content: string;
     }[],
   ) {
-    this.isProcessing = true;
-
     try {
       // Group files by directory
       const filesByDirectory = new Map<string, typeof files>();
@@ -175,12 +161,7 @@ export class FileCreator {
       this.currentDirectory = null;
     } catch (error) {
       console.error('Error creating files:', error);
-      // Ensure we clean up even if there's an error
-      this.cleanup();
       throw error;
-    } finally {
-      // Always clean up to prevent hanging
-      this.cleanup();
     }
   }
 }

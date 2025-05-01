@@ -1,37 +1,48 @@
 import path from 'path';
 import {
-    APIData,
-    BuildDataServicesPayload,
-    EndpointTypesEnum,
-    TemplateToBuild,
+  APIData,
+  BuildDataServicesPayload,
+  EndpointTypesEnum,
+  TemplateToBuild,
 } from '../../../@types';
 import { EndpointNameFactory } from '../../../factories/endpoints/node/EndpointNameFactory';
 import { HelperFunctionFactory } from '../../../factories/endpoints/node/HelperFunctionFactory';
 import { DataRegistry } from '../../../registries/DataRegistry';
 import {
-    countSequelizeTemplate,
-    createManySequelizeTemplate,
-    createSequelizeTemplate,
-    deleteManySequelizeTemplate,
-    deleteSequelizeTemplate,
-    findByIdSequelizeTemplate,
-    findManySequelizeTemplate,
-    updateManySequelizeTemplate,
-    updateSequelizeTemplate,
+  countSequelizeTemplate,
+  createManySequelizeTemplate,
+  createSequelizeTemplate,
+  deleteManySequelizeTemplate,
+  deleteSequelizeTemplate,
+  findByIdSequelizeTemplate,
+  findManySequelizeTemplate,
+  updateManySequelizeTemplate,
+  updateSequelizeTemplate,
 } from '../../../templates/dataServices/node/sequelizeTemplates';
-import { camelToPascal } from '../../../utils/stringUtils';
+import { camelToPascal, snakeToCamel } from '../../../utils/stringUtils';
 import isEmpty from '../../../utils/utilityFunctions/isEmpty';
 
 const dataRegistry = DataRegistry.getInstance();
 export class SequelizeServiceBuilder {
   static build(
     apis: APIData[],
-    apiFolders: Record<string, BuildDataServicesPayload>,
+    apiFolders: Record<string, Record<string, BuildDataServicesPayload>>,
     dataServicePath: string,
     typescriptPath: string,
   ): TemplateToBuild[] {
-
     apis.map((api) => {
+      const fileName = snakeToCamel(api.tableName);
+      // define the base object
+      apiFolders[api.folders.parent][fileName] = {
+        fileName,
+        helperImports: [],
+        typeImports: [],
+        enumImports: [],
+        typesToCreate: [],
+        dataServices: [],
+        modelImports: [],
+      };
+
       const table = dataRegistry.getTable(api.tableName);
       if (!table) return;
 
@@ -40,11 +51,13 @@ export class SequelizeServiceBuilder {
         .filter((argType) => argType.includes('Enum'));
 
       if (!isEmpty(enumsToImport)) {
-        apiFolders[api.folders.parent].enumImports.push(...enumsToImport);
+        apiFolders[api.folders.parent][fileName].enumImports.push(...enumsToImport);
       }
 
       // only if they have models configged. I.E from express, knex models etc.
-      apiFolders[api.folders.parent].modelImports.push(`${table.pascalCase}Model`);
+      apiFolders[api.folders.parent][fileName].modelImports.push(
+        `${table.pascalCase}Model`,
+      );
 
       api.methods.map((method) => {
         let template: string = '';
@@ -64,22 +77,30 @@ export class SequelizeServiceBuilder {
           case EndpointTypesEnum.DELETE_MANY:
           case EndpointTypesEnum.CREATE:
           case EndpointTypesEnum.UPDATE:
-            apiFolders[api.folders.parent].helperImports.push('runTransaction');
+            apiFolders[api.folders.parent][fileName].helperImports.push(
+              'runTransaction',
+            );
             break;
         }
 
         const typescriptName = camelToPascal(`${functionName}Args`);
         switch (method) {
           case EndpointTypesEnum.ID:
-            apiFolders[api.folders.parent].typeImports.push(api.responseType);
+            apiFolders[api.folders.parent][fileName].typeImports.push(
+              api.responseType,
+            );
             break;
           case EndpointTypesEnum.UPDATE:
           case EndpointTypesEnum.UPDATE_MANY:
           case EndpointTypesEnum.CREATE:
           case EndpointTypesEnum.CREATE_MANY:
           case EndpointTypesEnum.FIND_MANY:
-            apiFolders[api.folders.parent].typeImports.push(typescriptName);
-            apiFolders[api.folders.parent].typeImports.push(api.responseType);
+            apiFolders[api.folders.parent][fileName].typeImports.push(
+              typescriptName,
+            );
+            apiFolders[api.folders.parent][fileName].typeImports.push(
+              api.responseType,
+            );
         }
 
         switch (method) {
@@ -88,7 +109,7 @@ export class SequelizeServiceBuilder {
           case EndpointTypesEnum.CREATE:
           case EndpointTypesEnum.UPDATE_MANY:
           case EndpointTypesEnum.UPDATE:
-            apiFolders[api.folders.parent].typesToCreate.push(
+            apiFolders[api.folders.parent][fileName].typesToCreate.push(
               `export type ${typescriptName}= {${Object.values(api.args)
                 .map((arg) => arg.argWithType.join(arg.required ? ':' : '?:'))
                 .join(';')}}`,
@@ -125,53 +146,73 @@ export class SequelizeServiceBuilder {
             break;
         }
 
-        apiFolders[api.folders.parent].dataServices.push(template);
+        apiFolders[api.folders.parent][fileName].dataServices.push(template);
       });
-
-      const dataServices = Object.keys(apiFolders).map((folder) => ({
-        path: path.join(dataServicePath, folder, 'index.ts'),
-        template: this.buildTemplate(apiFolders[folder]),
-      }));
-
-      const typesToCreate = Object.keys(apiFolders).map((folder) => ({
-        path: path.join(typescriptPath, folder, 'index.ts'),
-        template: this.buildTypescriptTemplate(apiFolders[folder]),
-      }));
-
-      return [
-        ...dataServices,
-        ...typesToCreate,
-        // dataServices root index.ts
-        {
-          path: `${dataServicePath}/index.ts`,
-          template: Object.keys(apiFolders)
-            .map((folder) => `export * from './${folder}';`)
-            .join('\n'),
-        },
-        // dataServices root types index.ts
-        {
-          path: `${typescriptPath}/index.ts`,
-          template: Object.keys(apiFolders)
-            .map((folder) => `export * from './${folder}';`)
-            .join('\n'),
-        },
-      ];
     });
 
-    const dataServices = Object.keys(apiFolders).map((folder) => ({
-      path: path.join(dataServicePath, folder, 'index.ts'),
-      template: this.buildTemplate(apiFolders[folder]),
-    }));
+    const dataServices = Object.keys(apiFolders)
+      .map((folderName) => {
+        const { fileNames, templates } = Object.keys(apiFolders[folderName]).reduce<{
+          fileNames: string[];
+          templates: TemplateToBuild[];
+        }>(
+          (acc, fileName) => {
+            acc.fileNames.push(fileName);
+            acc.templates.push({
+              path: path.join(dataServicePath, folderName, `${fileName}.ts`),
+              template: this.buildTemplate(apiFolders[folderName][fileName]),
+            });
+            return acc;
+          },
+          { fileNames: [], templates: [] },
+        );
 
-    const typesToCreate = Object.keys(apiFolders).map((folder) => ({
-      path: path.join(typescriptPath, folder, 'index.ts'),
-      template: this.buildTypescriptTemplate(apiFolders[folder]),
-    }));
+        return [
+          {
+            path: path.join(dataServicePath, folderName, `index.ts`),
+            template: fileNames
+              .map((fileName) => `export * from './${fileName}';`)
+              .join('\n'),
+          },
+          ...templates,
+        ];
+      })
+      .flat();
+
+    const typesToCreate = Object.keys(apiFolders)
+      .map((folderName) => {
+        const { fileNames, templates } = Object.keys(apiFolders[folderName]).reduce<{
+          fileNames: string[];
+          templates: TemplateToBuild[];
+        }>(
+          (acc, fileName) => {
+            acc.fileNames.push(fileName);
+            acc.templates.push({
+              path: path.join(typescriptPath, folderName, `${fileName}.ts`),
+              template: this.buildTypescriptTemplate(
+                apiFolders[folderName][fileName],
+              ),
+            });
+            return acc;
+          },
+          { fileNames: [], templates: [] },
+        );
+
+        return [
+          {
+            path: path.join(typescriptPath, folderName, `index.ts`),
+            template: fileNames
+              .map((fileName) => `export * from './${fileName}';`)
+              .join('\n'),
+          },
+          ...templates,
+        ];
+      })
+      .flat();
 
     return [
       ...dataServices,
       ...typesToCreate,
-      // dataServices root index.ts
       {
         path: `${dataServicePath}/index.ts`,
         template: Object.keys(apiFolders)

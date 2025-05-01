@@ -1,12 +1,12 @@
-import { ConfigRegistry } from '../../registries';
-import { DataServicesBase, Orm, ORMEnum } from '../../@types';
+import { Orm, ORMEnum } from '../../@types';
+import { logRepoIssuesLink } from '../../utils/logs';
 import { KnexServiceBuilder } from './node/KnexServiceBuilder';
+import { PrismaServiceBuilder } from './node/PrismaServiceBuilder';
 import { SequelizeServiceBuilder } from './node/SequelizeServiceBuilder';
 import { TypeORMServiceBuilder } from './node/TypeORMServiceBuilder';
-import { PrismaServiceBuilder } from './node/PrismaServiceBuilder';
 
 export class DataServiceBuilder {
-  static getBuilder(orm: Orm){
+  static getBuilder(orm: Orm) {
     switch (orm) {
       case ORMEnum.knex: {
         return KnexServiceBuilder;
@@ -21,7 +21,10 @@ export class DataServiceBuilder {
         return TypeORMServiceBuilder;
       }
       default:
-        console.error('⚠️ ORM not supported, skipping data services creation.');
+        console.error(
+          '⚠️ ORM not supported, skipping data services creation. Open an issue on github to request',
+        );
+        logRepoIssuesLink();
         return null;
     }
   }

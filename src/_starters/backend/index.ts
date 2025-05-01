@@ -1,4 +1,23 @@
 import {
+  BuildDataServicesPayload,
+  ORMEnum,
+  ScaffoldingConfig,
+  TableStructureByFile,
+} from '../../@types';
+import {
+  buildMigrationsData,
+  buildSeedsData,
+  buildTypedefs,
+  buildTypescriptData,
+} from '../../builders';
+import { DataServiceBuilder } from '../../builders/dataServices/DataServiceBuilder';
+import { EndpointBuilder } from '../../builders/endpoints/EndpointBuilder';
+import { ModelBuilder } from '../../builders/models/modelBuilder';
+import { buildAndCreateServer } from '../../controllers/directoryTools/baseProjectFiles/creasteServer';
+import { FileCreator } from '../../controllers/directoryTools/FileCreator';
+import { TreeStructureManager } from '../../controllers/directoryTools/TreeStructureManager';
+import { ApiRouteFactory } from '../../factories/endpoints/node/ApiRouteFactory';
+import {
   ApisRegistry,
   DataServicesRegistry,
   MigrationsRegistry,
@@ -7,29 +26,11 @@ import {
   TypedefsRegistry,
   TypescriptRegistry,
 } from '../../registries';
-import {
-  buildMigrationsData,
-  buildSeedsData,
-  buildTypedefs,
-  buildTypescriptData,
-} from '../../builders';
-import {
-  BuildDataServicesPayload, LibrariesEnum,
-  ORMEnum,
-  ScaffoldingConfig,
-  TableStructureByFile,
-} from '../../@types';
-import { OrchestratorHelpers } from '../orchestratorHelpers';
-import { TreeStructureManager } from '../../controllers/directoryTools/TreeStructureManager';
-import { ApiRouteFactory } from '../../factories/endpoints/node/ApiRouteFactory';
-import { PackageRegistryRegistry } from '../../registries/PackageRegistry';
-import { buildAndCreateServer } from '../../controllers/directoryTools/baseProjectFiles/creasteServer';
 import { DataRegistry } from '../../registries/DataRegistry';
-import { EndpointBuilder } from '../../builders/endpoints/EndpointBuilder';
-import { DataServiceBuilder } from '../../builders/dataServices/DataServiceBuilder';
-import { logSectionHeader } from '../../utils/logs';
-import { FileCreator } from '../../controllers/directoryTools/FileCreator';
-import { ModelBuilder } from '../../builders/models/modelBuilder';
+import { PackageRegistryRegistry } from '../../registries/PackageRegistry';
+import { logRepoIssuesLink, logSectionHeader } from '../../utils/logs';
+import { camelToPascal } from '../../utils/stringUtils';
+import { OrchestratorHelpers } from '../orchestratorHelpers';
 
 const dataRegistry = DataRegistry.getInstance();
 
@@ -78,6 +79,7 @@ export class BackendOrchestrator extends OrchestratorHelpers {
     // only if sequelize for now
     if (this.config.orm !== ORMEnum.sequelize) {
       console.error('⚠️ Models only supported for sequelize right now.');
+      logRepoIssuesLink();
       return;
     }
     const fileCreator = new FileCreator();
@@ -87,23 +89,55 @@ export class BackendOrchestrator extends OrchestratorHelpers {
       console.error(
         '⚠️ ORM Models not currently supported. Open an issue on github to request',
       );
+      logRepoIssuesLink();
       return;
     }
 
     const modelFiles = builder.build(dataRegistry.getAllTables());
 
+    // Create all model files first
     await fileCreator.createFiles(
       modelFiles.map(({ template, path }) => ({
         path: `${this.fileTree.api.models!.root!}/${path}.ts`,
         content: template,
       })),
     );
-    // build index file
-    const modelsToImport = modelFiles.map(({ path }) => `export * from './${path}'`);
+
+    // Create an index file that initializes all models
+    const indexContent = `
+      import { Sequelize } from 'sequelize';
+      import { getSequelize } from '../database/connectToDB';
+      ${modelFiles.map(({ path }) => `import { ${camelToPascal(path.split('/').pop()!.replace('.ts', ''))}Model } from './${path}';`).join('\n')}
+
+      const sequelize = getSequelize();
+
+      // Initialize all models
+      export const initializeModels = async () => {
+        try {
+          // Test the database connection
+          await sequelize.authenticate();
+          console.log('Database connection established successfully.');
+
+          // Sync all models
+          await sequelize.sync();
+          console.log('All models synchronized successfully.');
+
+          return true;
+        } catch (error) {
+          console.error('Error initializing models:', error);
+          return false;
+        }
+      };
+
+      // Export all models
+      export {
+        ${modelFiles.map(({ path }) => `${camelToPascal(path.split('/').pop()!.replace('.ts', ''))}Model`).join(',\n')}
+      };
+    `;
 
     await fileCreator.createFile(
       `${this.fileTree.api.models!.root!}/index.ts`,
-      modelsToImport.join('\n'),
+      indexContent,
     );
   }
 
@@ -194,17 +228,10 @@ export class BackendOrchestrator extends OrchestratorHelpers {
 
     const apiFoldersDict = [
       ...new Set(Object.values(dataRegistry.getAllApiToTableRelationships())),
-    ].reduce<Record<string, BuildDataServicesPayload>>(
+    ].reduce<Record<string, Record<string, BuildDataServicesPayload>>>(
       (acc, cur) => ({
         ...acc,
-        [cur]: {
-          helperImports: [],
-          typeImports: [],
-          enumImports: [],
-          dataServices: [],
-          typesToCreate: [],
-          modelImports: []
-        },
+        [cur]: {},
       }),
       {},
     );
