@@ -1,11 +1,10 @@
-
 # ⚡ BOOM!Scaffold — Fullstack in Seconds
 
 **BOOM!Scaffold** is a schema-first scaffolding engine that turns your data model into a fully-typed, production-grade TypeScript stack in seconds — backend, frontend, and infra.
 
 Ideal for solo founders, internal tools, MVPs, and anyone who wants to skip the boilerplate and ship faster.
 
-##### Playground
+##### 🎯 Playground
 https://www.boomscaffold.com/playground/
 
 ---
@@ -14,14 +13,11 @@ https://www.boomscaffold.com/playground/
 
 From a single config file + your schema, BOOM!Scaffold generates:
 
-- A full GraphQL API (resolvers, typedefs, services)
-    
+- A full API — either **GraphQL** or **REST (Express)**
+- A backend powered by either **Knex** or **Sequelize**
 - A modern frontend (hooks, UI config, Tailwind)
-    
 - End-to-end typing + data services
-    
 - Optional admin panel, CI/CD, infra (AWS/CDK)
-    
 
 All in under 60 seconds.
 
@@ -32,7 +28,7 @@ All in under 60 seconds.
 ### Install (coming soon via npm):
 
 ```bash
-npm install -g @boom/cli
+npm i @boomscaf/cli
 ```
 
 Or, if you’re cloning locally:
@@ -40,15 +36,14 @@ Or, if you’re cloning locally:
 ```bash
 git clone https://github.com/calebswank11/boom-cli-core.git
 cd boom-cli-core
-yarn && npx ts-node src/build.ts
+yarn && yarn dev
 ```
 
-This will run BOOM!Scaffold. If it errors, make sure you have a SQL schema in `./sqlInput/` and a `scaffold.config.json` at root.
-
 ---
+
 ### Run the Scaffold (CLI):
 
-Make sure you have a SQL schema in `./sqlInput/` and a `scaffold.config.json` at root.
+Ensure you have a SQL schema in `./sqlInput/` and a `scaffold.config.json` at the root.
 
 Then generate your fullstack scaffold:
 
@@ -69,9 +64,9 @@ BOOM!Scaffold
 
 ---
 
-### Example Input:
+### Example Input
 
-**`./sqlInput/example.sql`**
+**SQL Schema: `./sqlInput/example.sql`**
 
 ```sql
 CREATE TABLE user (
@@ -82,17 +77,14 @@ CREATE TABLE user (
 );
 ```
 
-
-### Input: `scaffold.config.json`
-
-The CLI takes a single config file that drives your entire scaffold.
+**Scaffold Config: `scaffold.config.json`**
 
 ```json
 {
   "project": "my-app",
   "inputRoot": "./sqlInput",
-  "orm": "knex",
-  "apiType": "graphql",
+  "orm": "knex",            // or "sequelize"
+  "apiType": "graphql",     // or "express"
   "library": "apollo-server",
   "database": {
     "client": "pg",
@@ -118,32 +110,37 @@ The CLI takes a single config file that drives your entire scaffold.
 
 ## 📦 Output Structure
 
+Your scaffold adapts to your stack. Whether you choose **Knex + GraphQL**, **Sequelize + REST**, or any combo, you'll get a clean, structured project:
+
 **Backend:**
 
 ```
 build/
 ├── enums/           # Auto-generated enums
-├── migrations/      # migration files
+├── migrations/      # Migration files (Knex or Sequelize)
 ├── seeds/           # Seed data
 ├── src/
 │   ├── @types/      # Global TS types
 │   ├── config/      # DB/API config
 │   ├── database/    # Connection logic
-│   ├── dataServices/# CRUD helpers
-│   ├── resolvers/   # GraphQL resolvers
-│   ├── typedefs/    # GraphQL typeDefs
+│   ├── dataServices/# CRUD helpers (Knex or Sequelize)
+│   ├── ?resolvers/  # GraphQL resolvers (if selected)
+│   ├── ?controllers/# REST controllers (if selected)
+│   ├── ?models/     # REST models (if selected)
+│   ├── ?routes/     # Express routes (if selected)
+│   ├── ?typedefs/   # GraphQL typeDefs
 │   └── utils/       # Misc helpers
 ├── app/             # Optional frontend
 ├── cicd/            # GitHub Actions
 ├── cloudOps/        # AWS/CDK infra
-└── index.ts  # CLI entry
+└── index.ts         # CLI entry
 ```
 
 **Frontend (if enabled):**
 
 ```
 app/
-├── api/             # Query/mutation clients
+├── api/             # Query/mutation clients or REST calls
 ├── config/ui/       # Tailwind UI config
 ├── hooks/           # Auto-generated React/Solid/Svelte/Vue hooks
 ├── store/           # Global state
@@ -158,67 +155,54 @@ app/
 cd build && yarn && yarn dev
 ```
 
-Add your DB secrets, hook up the logic, and go 💥
+Add your DB secrets, build business logic, and launch 💥
 
 ---
 
 ## 🔧 Features
 
 - 🧠 **Schema-based generation** — just define your DB schema
-    
+- 🔁 **Knex or Sequelize** — choose your preferred SQL ORM
+- 🔀 **GraphQL or REST** — pick your API type, or scaffold both
 - 🧬 **Typed everything** — from services to typedefs
-    
-- ⚡ **GraphQL API** out of the box
-    
-- 🎨 **Tailwind UI + hooks** generated from models
-    
+- 🎨 **Tailwind UI + hooks** — generated from your schema
 
 ---
 
 ## 🛠 Developer Workflow
 
-1. Create your schema (e.g., SQL or DSL format)
-    
-2. Run the CLI:
-    
+1. Create your schema (SQL or DSL)
+2. Configure `scaffold.config.json`
+3. Run the CLI:
+
     ```bash
-    npx @boom/cli init
+    npx @boomscaf/cli@ init
     ```
-    
-3. Update `scaffold.config.json` if needed
-    
-4. Re-run to generate:
-    
+
+4. Update config as needed
+5. Re-run the scaffold:
+
     ```bash
-    npx @boom/cli generate
+    npx @boomscaf/cli generate
     ```
-    
-5. Wire up secrets, build business logic, and go.
-    
+
+6. Build on top. Done.
 
 ---
 
 ## 📌 Use Cases
 
-BOOM!Scaffold is perfect for:
-
 - 🧑‍💻 Solo devs building MVPs
-    
 - 🏢 Internal tooling
-    
 - 🧬 Data-first product backends
-    
 - 🛒 Marketplaces
-    
-- ⚙️ Teams that want repeatable fullstack scaffolds
-    
+- ⚙️ Reusable scaffolds across teams
 
 ---
 
 ## 🚧 Roadmap
 | Feature                                    | Purpose                                                  |
 | ------------------------------------------ | -------------------------------------------------------- |
-| 🔧 **REST API output**                     | Generate REST endpoints alongside GraphQL                |
 | 🔄 **Inline rescaffolding**                | Detect schema changes and update files non-destructively |
 | 🔐 **JWT auth, rate limiting, versioning** | Add production-ready security out of the box             |
 | 🧠 **Ollama integration**                  | Natural-language prompts to generate scaffold features   |
@@ -236,7 +220,8 @@ BOOM!Scaffold is perfect for:
 | ✍️ **Schema linter + formatter**           | Validate/enforce schema structure before scaffolding     |
 
 ---
+
 ## 💬 Feedback
 
-We’re building fast. If you hit something weird or want a feature, reach out or [submit feedback here](https://www.boomscaffold.com).
-
+We’re building fast. Hit something weird? Want a new feature?
+Drop us a note or [submit feedback here](https://github.com/calebswank11/boom-cli-core/issues).
