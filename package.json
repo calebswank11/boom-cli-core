@@ -3,8 +3,18 @@
   "type": "commonjs",
   "version": "1.1.1",
   "description": "The official CLI for BOOM!Scaffold – generate fullstack apps from your schema.",
+  "author": {
+    "name": "Caleb Swank"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/calebswank11/boom-cli-core.git"
+  },
+  "homepage": "https://www.boomscaffold.com",
+  "bugs": {
+    "url": "https://github.com/calebswank11/boom-cli-core/issues"
+  },
   "main": "dist/cli.js",
-  "author": "",
   "license": "MIT",
   "scripts": {
     "build": "yarn tsc && chmod +x dist/cli.js",
