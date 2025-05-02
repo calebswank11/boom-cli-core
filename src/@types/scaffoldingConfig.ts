@@ -48,7 +48,9 @@ export interface ScaffoldingConfig {
         staging: FeatureToggle;
         prod: FeatureToggle;
       };
+      models: {folder: string; active: FeatureToggle };
       apis: { folder: string; active: FeatureToggle };
+      routes: { folder: string; active: FeatureToggle };
       typedefs: { folder: string; active: FeatureToggle };
       helperFunctions: { folder: string; active: FeatureToggle };
       tests: FeatureToggle;

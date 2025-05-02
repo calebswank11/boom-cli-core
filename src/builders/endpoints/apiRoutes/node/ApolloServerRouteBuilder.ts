@@ -1,9 +1,23 @@
-import { EndpointTypesEnum, RouteArgBase, RouteBase } from '../../../../@types';
-import { DataRegistry } from '../../../../registries/DataRegistry';
+import {
+  EndpointTypesEnum,
+  RouteArgBase,
+  RouteBase,
+  TemplateToBuild,
+} from '../../../../@types';
 import { EndpointNameFactory } from '../../../../factories/endpoints/node/EndpointNameFactory';
+import { DataRegistry } from '../../../../registries/DataRegistry';
 import { pascalToCamel } from '../../../../utils/stringUtils';
 
 export class ApolloServerRouteBuilder {
+  private static argOmissionOnCreate = [
+    'created_at',
+    'updated_at',
+    'deleted_at',
+    'id',
+    'uuid',
+  ];
+  private static argOmissionOnUpdate = ['created_at', 'updated_at', 'deleted_at'];
+
   private static getGraphQLType(arg: RouteArgBase, strict: boolean) {
     const getType = () => {
       if (arg.type.includes('enum')) {
@@ -61,13 +75,48 @@ export class ApolloServerRouteBuilder {
           type: new GraphQLList(${pascalToCamel(route.type.name)}ObjectType),
         }`;
       case EndpointTypesEnum.CREATE_MANY:
+        return `${route.functionName}: {
+          resolve: ${route.functionName},
+          args: {
+            ${route.args
+              .filter((arg) => !this.argOmissionOnCreate.includes(arg.name))
+              .map((arg) => this.getGraphQLType(arg, true))
+              .join(',\n')}
+          },
+          type: new GraphQLList(${pascalToCamel(route.type.name)}ObjectType),
+        }`;
+      case EndpointTypesEnum.CREATE:
+        return `${route.functionName}: {
+          resolve: ${route.functionName},
+          args: {
+            ${route.args
+              .filter((arg) => !this.argOmissionOnCreate.includes(arg.name))
+              .map((arg) => this.getGraphQLType(arg, true))
+              .join(',\n')}
+          },
+          type: ${pascalToCamel(route.type.name)}ObjectType,
+        }`;
       case EndpointTypesEnum.UPDATE_MANY:
         return `${route.functionName}: {
           resolve: ${route.functionName},
           args: {
-            ${route.args.map((arg) => this.getGraphQLType(arg, true)).join(',\n')}
+            ${route.args
+              .filter((arg) => !this.argOmissionOnUpdate.includes(arg.name))
+              .map((arg) => this.getGraphQLType(arg, true))
+              .join(',\n')}
           },
           type: new GraphQLList(${pascalToCamel(route.type.name)}ObjectType),
+        }`;
+      case EndpointTypesEnum.UPDATE:
+        return `${route.functionName}: {
+          resolve: ${route.functionName},
+          args: {
+            ${route.args
+              .filter((arg) => !this.argOmissionOnUpdate.includes(arg.name))
+              .map((arg) => this.getGraphQLType(arg, true))
+              .join(',\n')}
+          },
+          type: ${pascalToCamel(route.type.name)}ObjectType,
         }`;
       default:
         return `${route.functionName}: {
@@ -129,9 +178,7 @@ export class ApolloServerRouteBuilder {
   }
 
   // this _is_ actually used in the Backend Orchestrator
-  static getRoutesByFolder(
-    routes: RouteBase[],
-  ): { filePath: string; template: string }[] {
+  static getRoutesByFolder(routes: RouteBase[]): TemplateToBuild[] {
     const folders = [...new Set(routes.map((route) => route.folder))];
     const buckets = {
       mutation: folders.reduce<Record<string, RouteBase[]>>(
@@ -180,7 +227,7 @@ export class ApolloServerRouteBuilder {
           return this.resolverObjectTemplate(route);
         });
         return {
-          filePath: `${type === 'mutation' ? 'mutations' : 'queries'}/${folder}/index.ts`,
+          path: `${type === 'mutation' ? 'mutations' : 'queries'}/${folder}/index.ts`,
           template: this.buildResolverFileTemplate(
             type === 'mutation' ? 'Mutation' : 'Query',
             folder,
@@ -234,22 +281,22 @@ export class ApolloServerRouteBuilder {
     });
 
     const rootMutationResolver = {
-      filePath: `mutations/index.ts`,
+      path: `mutations/index.ts`,
       template: `
         ${rootMutationResolversToImport.join('\n')}
         import { GraphQLNonNull, GraphQLObjectType } from 'graphql/type';
-        
+
         export default {
           ${rootMutationFolder.join(',\n')}
         }
       `,
     };
     const rootQueryResolver = {
-      filePath: `queries/index.ts`,
+      path: `queries/index.ts`,
       template: `
         ${rootQueryResolversToImport.join('\n')}
         import { GraphQLNonNull, GraphQLObjectType } from 'graphql/type';
-        
+
         export default {
           ${rootQueryFolder.join(',\n')}
         }
@@ -262,10 +309,10 @@ export class ApolloServerRouteBuilder {
       rootMutationResolver,
       rootQueryResolver,
       {
-        filePath: 'utils.ts',
+        path: 'utils.ts',
         template: `
           import { GraphQLBoolean, GraphQLInt, GraphQLObjectType } from 'graphql/type';
-          
+
           export const baseCountObjectType = new GraphQLObjectType({
             name: 'baseCountObjectType',
             fields: {
@@ -277,7 +324,7 @@ export class ApolloServerRouteBuilder {
             fields: {
               success: { type: GraphQLBoolean },
             },
-          }) 
+          })
         `,
       },
     ];

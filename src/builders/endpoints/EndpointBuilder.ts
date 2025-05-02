@@ -1,4 +1,3 @@
-import { ConfigRegistry } from '../../registries';
 import {
   APIAggregateData,
   APIAggregateDictionary,
@@ -10,14 +9,16 @@ import {
   TypescriptData,
   WriteEndpointTypes,
 } from '../../@types';
-import { ApolloServerBuilder } from './node/ApolloServerBuilder';
-import { ExpressBuilder } from './node/ExpressBuilder';
-import { NestJSBuilder } from './node/NestJSBuilder';
-import { DataRegistry } from '../../registries/DataRegistry';
+import { ArgumentsFactory } from '../../factories/endpoints/node/ArgumentsFactory';
 import { EndpointNameFactory } from '../../factories/endpoints/node/EndpointNameFactory';
 import { HelperFunctionFactory } from '../../factories/endpoints/node/HelperFunctionFactory';
 import { ImportFactory } from '../../factories/endpoints/node/ImportFactory';
-import { ArgumentsFactory } from '../../factories/endpoints/node/ArgumentsFactory';
+import { ConfigRegistry } from '../../registries';
+import { DataRegistry } from '../../registries/DataRegistry';
+import { logRepoIssuesLink } from '../../utils/logs';
+import { ApolloServerBuilder } from './node/ApolloServerBuilder';
+import { ExpressBuilder } from './node/ExpressBuilder';
+import { NestJSBuilder } from './node/NestJSBuilder';
 
 export class EndpointBuilder extends ConfigRegistry {
   constructor() {
@@ -149,6 +150,7 @@ export class EndpointBuilder extends ConfigRegistry {
       }
       default:
         console.error('⚠️ Library not supported; skipping api creation.');
+        logRepoIssuesLink();
         return null;
     }
   }

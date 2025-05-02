@@ -3,22 +3,23 @@ import { ORMEnum, ScaffoldingConfig } from '../../@types';
 import { indexTypesTemplate } from '../../templates/@types';
 import { commonIndexTypesTemplate } from '../../templates/@types/common';
 import { refiningTypesTemplate } from '../../templates/@types/common/refining';
-import { typedefsTypesTemplate } from '../../templates/@types/typedefs';
 import { helpersTypesTemplate } from '../../templates/@types/tables/helpers';
+import { typedefsTypesTemplate } from '../../templates/@types/typedefs';
+import { utilsTemplate } from '../../templates/@types/utils';
+import { apolloGraphqlSchemaTemplate } from '../../templates/apiRoutes/node/apolloGraphqlSchema';
+import { routeUtilsTemplate } from '../../templates/apiRoutes/routeUtilsTemplate';
+import { knexDBConfigTemplate } from '../../templates/database/knex/config';
+import { knexSingletonDBTemplate } from '../../templates/database/knex/singletonAccess';
+import { sequelizeDBConfigTemplate } from '../../templates/database/sequelize/config';
+import { sequelizeSingletonDBTemplate } from '../../templates/database/sequelize/singletonAccess';
 import { migrationUtilsTemplates } from '../../templates/migrations/utils';
+import { seedsUtilsIndexTemplate } from '../../templates/seeds/utils';
+import { tsConfigTemplate } from '../../templates/tsConfigTemplate';
 import { indexUtilityFunctionsTemplate } from '../../templates/utils/utilityFunctions';
 import { deepCloneTemplate } from '../../templates/utils/utilityFunctions/deepClone';
 import { getTemplate } from '../../templates/utils/utilityFunctions/get';
 import { intersectionTemplate } from '../../templates/utils/utilityFunctions/intersection';
 import { isEmptyTemplate } from '../../templates/utils/utilityFunctions/isEmpty';
-import { utilsTemplate } from '../../templates/@types/utils';
-import { seedsUtilsIndexTemplate } from '../../templates/seeds/utils';
-import { knexDBConfigTemplate } from '../../templates/database/knex/config';
-import { sequelizeDBConfigTemplate } from '../../templates/database/sequelize/config';
-import { knexSingletonDBTemplate } from '../../templates/database/knex/singletonAccess';
-import { sequelizeSingletonDBTemplate } from '../../templates/database/sequelize/singletonAccess';
-import { apolloGraphqlSchemaTemplate } from '../../templates/apiRoutes/node/apolloGraphqlSchema';
-import { tsConfigTemplate } from '../../templates/tsConfigTemplate';
 
 export class TreeStructureManager {
   private config: ScaffoldingConfig;
@@ -108,7 +109,7 @@ export class TreeStructureManager {
       utils: {
         root: this.withRoot(`${this.config.outputs.api.migrations.folder}/utils`),
         files: {
-          root: ['index.ts', migrationUtilsTemplates],
+          root: ['index.ts', migrationUtilsTemplates(this.config.orm)],
         },
       },
     };
@@ -119,7 +120,7 @@ export class TreeStructureManager {
       utils: {
         root: this.withRoot(`${this.config.outputs.api.seeds.folder}/utils`),
         files: {
-          root: ['index.ts', seedsUtilsIndexTemplate],
+          root: ['index.ts', seedsUtilsIndexTemplate(this.config.orm)],
         },
       },
       dev: this.withRoot(`${this.config.outputs.api.seeds.folder}/dev`),
@@ -128,26 +129,64 @@ export class TreeStructureManager {
     };
   }
   getAPIStructure() {
-    const fetchSubFolder = this.config.apiType === 'graphql' ? '/queries' : '';
-    const writeSubFolder = this.config.apiType === 'graphql' ? '/mutations' : '';
+    if (this.config.apiType === 'graphql') {
+      const fetchSubFolder = '/queries';
+      const writeSubFolder = '/mutations';
 
-    return {
-      root: this.withRoot(this.config.outputs.api.apis.folder),
-      files: {
-        root: ['schema.ts', apolloGraphqlSchemaTemplate],
-      },
-      query: this.withRoot(
-        `${this.config.outputs.api.apis.folder}${fetchSubFolder}`,
-      ),
-      mutation: this.withRoot(
-        `${this.config.outputs.api.apis.folder}${writeSubFolder}`,
-      ),
-    };
+      return {
+        root: this.withRoot(this.config.outputs.api.apis.folder),
+        files: {
+          root: ['schema.ts', apolloGraphqlSchemaTemplate],
+        },
+        query: this.withRoot(
+          `${this.config.outputs.api.apis.folder}${fetchSubFolder}`,
+        ),
+        mutation: this.withRoot(
+          `${this.config.outputs.api.apis.folder}${writeSubFolder}`,
+        ),
+      };
+    }
+    if (this.config.apiType === 'rest') {
+      return {
+        root: this.withRoot(this.config.outputs.api.apis.folder),
+        files: {
+          root: ['index.ts', `// Rest Controller Base file`],
+        },
+      };
+    }
+
+    return {};
   }
+
+  getRoutesStructure() {
+    if (this.config.apiType === 'rest') {
+      return {
+        root: this.withRoot(this.config.outputs.api.routes.folder),
+        files: {
+          root: ['index.ts', `// Rest Routes base file`],
+          utils: ['utils.ts', routeUtilsTemplate(this.config.library)],
+        },
+      };
+    }
+  }
+
   getTypedefsStructure() {
-    return {
-      root: this.withRoot(this.config.outputs.api.typedefs.folder),
-    };
+    if (this.config.apiType === 'graphql') {
+      return {
+        root: this.withRoot(this.config.outputs.api.typedefs.folder),
+      };
+    }
+  }
+
+  getModelStructure() {
+    if (this.config.orm === ORMEnum.sequelize) {
+      return {
+        root: this.withRoot(this.config.outputs.api.models.folder),
+        files: {
+          root: ['index.ts', '// Rest base model file'],
+        },
+      };
+    }
   }
 
   getHelperFunctionsStructure() {
@@ -155,7 +194,7 @@ export class TreeStructureManager {
       root: this.withRoot(this.config.outputs.api.helperFunctions.folder),
       files: {
         root: ['index.ts'],
-        utils: ['utils.ts', utilsTemplate],
+        utils: ['utils.ts', utilsTemplate(this.config.orm)],
       },
     };
   }
@@ -186,21 +225,41 @@ export class TreeStructureManager {
     };
   }
 
+  getBaseFiles() {
+    const baseFiles: Record<string, any> = {
+      tsConfig: [
+        this.withRoot(`tsconfig.json`),
+        this.defaultTemplates.CONFIG.TSCONFIG,
+      ],
+    };
+    if (this.config.orm) {
+      switch (this.config.orm) {
+        case ORMEnum.sequelize:
+          baseFiles.sequelize = [
+            this.withRoot(`sequelize.ts`),
+            this.defaultTemplates.CONFIG.DB[this.config.orm as ORMEnum],
+          ];
+          break;
+        case ORMEnum.knex:
+          baseFiles.knexfile = [
+            this.withRoot(`knexfile.ts`),
+            this.defaultTemplates.CONFIG.DB[this.config.orm as ORMEnum],
+          ];
+          break;
+      }
+    }
+
+    return baseFiles;
+  }
+
   getBackendStructure() {
     return {
-      files: {
-        knexfile: [
-          this.withRoot(`knexfile.ts`),
-          this.defaultTemplates.CONFIG.DB[this.config.orm as ORMEnum],
-        ],
-        tsConfig: [
-          this.withRoot(`tsconfig.json`),
-          this.defaultTemplates.CONFIG.TSCONFIG,
-        ],
-      },
+      files: this.getBaseFiles(),
       helperFunctions: this.getHelperFunctionsStructure(),
       migrations: this.getMigrationsStructure(),
       apis: this.getAPIStructure(),
+      routes: this.getRoutesStructure(),
+      models: this.getModelStructure(),
       typedefs: this.getTypedefsStructure(),
       seeds: this.getSeedsStructure(),
       config: this.getConfigStructure(),
@@ -269,7 +328,6 @@ export class TreeStructureManager {
   }
 
   getTreeMap() {
-    console.log(`${this.config.srcRoot}/data/registryData`);
     return {
       root: this.withRoot(''),
       enums: this.withRoot(this.config.outputs.enums.folder),

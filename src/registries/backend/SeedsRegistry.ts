@@ -1,8 +1,8 @@
 import fs from 'fs';
-import { SeedBase, SeedsRegistryBase } from '../../@types';
+import { SeedsRegistryBase } from '../../@types';
 import { ConfigRegistry } from '../ConfigRegistry';
 import { FileCreator } from '../../controllers/directoryTools/FileCreator';
-import { seedTemplate } from '../../templates/seeds/seed';
+import { getSeedTemplate } from '../../templates/seeds/seed';
 import path from 'path';
 import { logSectionHeader, logSectionHeaderError } from '../../utils/logs';
 
@@ -62,6 +62,10 @@ export class SeedsRegistry extends ConfigRegistry {
     const fileCreator = new FileCreator();
     const config = this.getConfig();
     if (config.outputs.api.seeds.dev) {
+      const seedTemplate = getSeedTemplate(config.orm);
+      if (!seedTemplate) {
+        throw new Error('❗️Seed template not provided, please check your config!');
+      }
       await fileCreator.createFiles(
         this.getSeeds().map(({ name, seeds }) => ({
           content: seedTemplate(seeds),

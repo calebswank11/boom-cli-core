@@ -1,5 +1,5 @@
-import { ReadEndpointTypes, WriteEndpointTypes } from './endpoints';
 import { APIArgument, SqlDataType } from './dataRegistry';
+import { ReadEndpointTypes, WriteEndpointTypes } from './endpoints';
 
 export interface MigrationsBase {
   tablesToCreate: string[];
@@ -47,14 +47,19 @@ export enum GraphQLField {
   GraphQLBoolean = 'GraphQLBoolean',
   GraphQLID = 'GraphQLID',
   GraphQLEnumType = 'GraphQLEnumType',
+  GraphQLObjectType = 'GraphQLObjectType',
 }
 
 export interface GraphQLFieldTypeBase {
   key: string;
-  type: GraphQLField;
+  type: GraphQLField | string;
   nullable?: boolean;
   list?: boolean;
-  enums?: { enumName: string; fields: string[] };
+  targetType?: string;
+  enums?: {
+    enumName: string;
+    fields: string[];
+  };
 }
 
 export interface TypedefsBase {
@@ -106,6 +111,7 @@ export interface PackageRegistryBase {
     api: {
       type: {
         graphql: Record<string, string>;
+        rest: Record<string, string>;
       };
       handler: {
         general: Record<string, string>;
@@ -159,11 +165,12 @@ export interface PackageRegistryBase {
   };
 }
 
+export * from './builders';
+export * from './cli.types';
+export * from './constants';
+export * from './dataRegistry';
+export * from './dynamo';
 export * from './endpoints';
 export * from './scaffoldingConfig';
-export * from './dataRegistry';
 export * from './templates';
-export * from './dynamo';
-export * from './constants';
-export * from './cli.types';
-export * from './builders';
+

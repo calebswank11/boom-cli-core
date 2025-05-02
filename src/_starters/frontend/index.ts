@@ -1,15 +1,15 @@
-import { ClientAPIHookDataRobust, ScaffoldingConfig } from '../../@types';
-import { OrchestratorHelpers } from '../orchestratorHelpers';
-import { TreeStructureManager } from '../../controllers/directoryTools/TreeStructureManager';
-import { DataRegistry } from '../../registries/DataRegistry';
-import { ApiMapBuilder } from '../../builders/frontend/apiMaps/ApiMapBuilder';
-import { GraphQLApiMapRegistry, HooksRegistry } from '../../registries';
-import { HookBuilder } from '../../builders/frontend/hooks/HookBuilder';
-import { ComponentBuilder } from '../../builders/frontend/components/ComponentBuilder';
-import { FileCreator } from '../../controllers/directoryTools/FileCreator';
 import path from 'path';
+import { ClientAPIHookDataRobust, ScaffoldingConfig } from '../../@types';
+import { ApiMapBuilder } from '../../builders/frontend/apiMaps/ApiMapBuilder';
+import { ComponentBuilder } from '../../builders/frontend/components/ComponentBuilder';
+import { HookBuilder } from '../../builders/frontend/hooks/HookBuilder';
+import { FileCreator } from '../../controllers/directoryTools/FileCreator';
 import { FolderCreator } from '../../controllers/directoryTools/FolderCreator';
-import { logSectionHeader } from '../../utils/logs';
+import { TreeStructureManager } from '../../controllers/directoryTools/TreeStructureManager';
+import { GraphQLApiMapRegistry, HooksRegistry } from '../../registries';
+import { DataRegistry } from '../../registries/DataRegistry';
+import { logRepoIssuesLink, logSectionHeader } from '../../utils/logs';
+import { OrchestratorHelpers } from '../orchestratorHelpers';
 
 const dataRegistry = DataRegistry.getInstance();
 
@@ -32,6 +32,7 @@ export class FrontendOrchestrator extends OrchestratorHelpers {
       console.error(
         `Frontend Hooks are not supported for this API Library: ${this.config.library}`,
       );
+      logRepoIssuesLink();
       return;
     }
     const apiMaps = apiMapBuilder.build();

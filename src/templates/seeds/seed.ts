@@ -1,4 +1,4 @@
-import { SeedBase, SqlDataType } from '../../@types';
+import { Orm, ORMEnum, SeedBase, SqlDataType } from '../../@types';
 import { DataRegistry } from '../../registries/DataRegistry';
 
 const dataRegistry = DataRegistry.getInstance();
@@ -86,7 +86,13 @@ const getFieldValue = (tableName: string, columnName: string) => {
   switch (columnType) {
     case SqlDataType.TEXT:
     case SqlDataType.VARCHAR:
-      return getFakerValue(tableColumn?.name || '');
+      if (tableColumn?.type.limit) {
+        if (tableColumn.default) {
+          return `'${tableColumn.default}'`;
+        }
+        return `faker.lorem.letters(${tableColumn?.type.limit})`;
+      }
+      return `faker.lorem.words()`;
     case SqlDataType.INT:
       return `faker.number.int({ min: 1, max: 1000 })`; // Generates a random integer
     case SqlDataType.BOOLEAN:
@@ -116,7 +122,19 @@ const getFieldValue = (tableName: string, columnName: string) => {
   }
 };
 
-export const seedTemplate = (seeds: SeedBase[]) => {
+export const getSeedTemplate = (orm: Orm) => {
+  switch (orm) {
+    case ORMEnum.knex:
+      return knexSeedTemplate;
+    case ORMEnum.sequelize:
+      return sequelizeSeedTemplate;
+    case ORMEnum.typeorm:
+      return typeOrmSeedTemplate;
+    case ORMEnum.prisma:
+      return prismaSeedTemplate;
+  }
+};
+const knexSeedTemplate = (seeds: SeedBase[]) => {
   const fetchedData: string[] = [];
 
   const builtSeeds = seeds.map((seed) => {
@@ -131,7 +149,7 @@ export const seedTemplate = (seeds: SeedBase[]) => {
         const ${reference.refTable}Data: (string | number)[] = await knex('${reference.refTable}').pluck('${reference.key}').limit(50);
       `;
         })
-        .join('\n')}      
+        .join('\n')}
         await seedTable('${seed.tableName}', Array.from({length: 25}, () => ({
           ${seed.fields.map((field) => `${field.column}: ${getFieldValue(seed.tableName, field.column)}`).join(',\n')}
         })));
@@ -148,7 +166,7 @@ import {
 import bcrypt from 'bcryptjs';
 
 exports.seed = async function (knex: Knex) {
-  
+
   async function seedTable(table: string, rows: any[]) {
     if (await shouldSeedData(knex, table)) {
       await knex(table).insert(rows);
@@ -158,4 +176,53 @@ exports.seed = async function (knex: Knex) {
   ${builtSeeds.join('\n')}
 }
 `;
+};
+
+const sequelizeSeedTemplate = (seeds: SeedBase[]) => {
+  const fetchedData: string[] = [];
+
+  const builtSeeds = seeds.map((seed) => {
+    return `
+      ${seed.references
+        .map((reference) => {
+          if (fetchedData.includes(reference.refTable)) {
+            return;
+          }
+          fetchedData.push(reference.refTable);
+          return `
+        const ${reference.refTable}Data: (string | number)[] = await queryInterface.sequelize.query('SELECT id FROM ${reference.refTable} LIMIT 50');
+      `;
+        })
+        .join('\n')}
+        await seedTable(queryInterface, '${seed.tableName}', Array.from({length: 25}, () => ({
+          ${seed.fields.map((field) => `${field.column}: ${getFieldValue(seed.tableName, field.column)}`).join(',\n')}
+        })));
+    `;
+  });
+
+  return `
+import { QueryInterface} from 'sequelize';
+import { faker } from '@faker-js/faker';
+import bcrypt from 'bcryptjs';
+import {
+  seedTable,
+  getRandomIdx,
+} from '../utils';
+
+export default {
+  up: async (queryInterface: QueryInterface) => {
+    ${builtSeeds.join('\n')}
+  },
+  down: async (queryInterface: QueryInterface) => {
+
+  }
+}
+  `;
+};
+
+const typeOrmSeedTemplate = (seeds: SeedBase[]) => {
+  return `typeOrmSeedTemplate`;
+};
+const prismaSeedTemplate = (seeds: SeedBase[]) => {
+  return `prismaSeedTemplate`;
 };

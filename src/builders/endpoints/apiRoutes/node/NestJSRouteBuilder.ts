@@ -1,4 +1,4 @@
-import { RouteBase } from '../../../../@types';
+import { RouteBase, TemplateToBuild } from '../../../../@types';
 import { DataRegistry } from '../../../../registries/DataRegistry';
 
 export class NestJSRouteBuilder {
@@ -7,7 +7,7 @@ export class NestJSRouteBuilder {
   }
   static getRoutesByFolder(
     routes: RouteBase[],
-  ): { filePath: string; template: string }[] {
+  ): TemplateToBuild[] {
     return [];
   }
 }

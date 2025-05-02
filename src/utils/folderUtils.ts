@@ -6,7 +6,7 @@ export const categorizeFolders = (tableNames: string[]) => {
     return acc;
   }, {});
 
-  const commonTables = Object.keys(tableDict).filter((key) => tableDict[key] >= 3);
+  const commonTables = Object.keys(tableDict).filter((key) => tableDict[key] >= 2);
 
   const commonTableDict = commonTables.reduce<Record<string, string[]>>(
     (acc, cur) => ({

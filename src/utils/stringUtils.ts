@@ -8,6 +8,12 @@ export const sanitizeSQL = (sql: string): string => {
     .replace(/(?<!;)\s*$/, ';'); // Ensure final semicolon
 };
 
+export function capitalizeFirstChar(str: string): string {
+  if (!str) return str; // handle empty string/null
+
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 export const snakeToPascalCase = (str: string): string =>
   str
     .split('_')
@@ -50,7 +56,9 @@ export const camelToPascal = (str: string): string => {
 
 export const extractEnumValues = (line: string): string[] | null => {
   const match = line.match(/ENUM\((.*?)\)/);
-  return match ? match[1].split(',').map((v) => v.trim().replace(/'/g, '')) : null;
+  return match
+    ? match[1].split(',').map((v) => v.trim().replace(/'/g, '').toLowerCase())
+    : null;
 };
 
 export const sanitizeEnumKey = (value: string): string => {

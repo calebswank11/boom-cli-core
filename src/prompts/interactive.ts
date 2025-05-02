@@ -4,10 +4,10 @@ import {
   ApiTypesEnum,
   CLIOptions,
   CLIOptionsRoot,
-  Frameworks,
+  FrameworksEnum,
   Libraries,
   LibrariesEnum,
-  ORMs,
+  ORMEnum,
 } from '../@types';
 
 export async function runInteractivePrompts(
@@ -33,7 +33,7 @@ export async function runInteractivePrompts(
         type: 'list',
         name: CLIOptionsRoot.orm,
         message: 'Which ORM would you like to use?',
-        choices: ORMs,
+        choices: [ORMEnum.knex, ORMEnum.sequelize],
       },
     ]);
     answers.orm = orm;
@@ -45,11 +45,7 @@ export async function runInteractivePrompts(
         if (answers.apiType === ApiTypesEnum.graphql) {
           return Libraries.filter((lib) => lib === LibrariesEnum.apollo_server);
         } else {
-          return Libraries.filter((lib) =>
-            [LibrariesEnum.express, LibrariesEnum.nestjs].includes(
-              lib as LibrariesEnum,
-            ),
-          );
+          return [LibrariesEnum.express];
         }
       } else return Libraries;
     };
@@ -57,7 +53,7 @@ export async function runInteractivePrompts(
       {
         type: 'list',
         name: CLIOptionsRoot.library,
-        message: 'Which API uiLibrary?',
+        message: 'Which API uiLibrary? ',
         choices: choices(),
       },
     ]);
@@ -70,7 +66,7 @@ export async function runInteractivePrompts(
         type: 'list',
         name: CLIOptionsRoot.frontend,
         message: 'Include Frontend hooks?',
-        choices: ['no', ...Frameworks],
+        choices: ['no', FrameworksEnum.react, FrameworksEnum.solid],
       },
     ]);
     answers.frontEnd = frontend;

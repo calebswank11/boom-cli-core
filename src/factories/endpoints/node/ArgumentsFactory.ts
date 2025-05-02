@@ -7,6 +7,7 @@ import {
   WriteEndpointTypes,
 } from '../../../@types';
 import {
+  camelToPascal,
   snakeToCamel,
   snakeToCapSentence,
   snakeToPascalCase,
@@ -16,6 +17,14 @@ const buildKeyValPair = (arg: APIArgument) =>
   arg.argWithType.join(arg.required ? ':' : '?:');
 
 export class ArgumentsFactory {
+  private static argOmissionOnCreate = [
+    'created_at',
+    'updated_at',
+    'deleted_at',
+    'id',
+    'uuid',
+  ];
+
   static getArgumentsData(
     type: ReadEndpointTypes | WriteEndpointTypes | string,
     args: APIArgument[],
@@ -94,20 +103,27 @@ export class ArgumentsFactory {
 
   static getArgsTemplate(
     type: ReadEndpointTypes | WriteEndpointTypes | string,
-    args: APIArgument[],
+    record: APIAggregateData,
   ): string {
+    const args = record.args || [];
     if (args.length === 0) return 'args: any';
     switch (type) {
       case EndpointTypesEnum.CREATE_MANY:
       case ReadEndpointTypes.FIND_MANY:
-        return `args: {${args.map(buildKeyValPair)}}[]`;
+        return `args: ${camelToPascal(record.dataService.name + 'Args')}[]`;
       case EndpointTypesEnum.UPDATE_MANY:
-        return `args: {${args.map(buildKeyValPair)}}[]`;
+        return `args: ${camelToPascal(record.dataService.name + 'Args')}[]`;
       case ReadEndpointTypes.COUNT:
         return 'args: null';
       case EndpointTypesEnum.UPDATE:
+        return `{${args
+          .map((arg) => arg.name)
+          .join(',\n')}}: ${camelToPascal(record.dataService.name + 'Args')}`;
       case EndpointTypesEnum.CREATE:
-        return `{${args.map((arg) => arg.name).join(',\n')}}: {${args.map(buildKeyValPair)}}`;
+        return `{${args
+          .map((arg) => arg.name)
+          .filter((arg) => !this.argOmissionOnCreate.includes(arg))
+          .join(',\n')}}: ${camelToPascal(record.dataService.name + 'Args')}`;
       case EndpointTypesEnum.DELETE:
       case ReadEndpointTypes.ID:
         return `{id}: {id: string;}`;
@@ -131,8 +147,12 @@ export class ArgumentsFactory {
       case ReadEndpointTypes.COUNT:
         return null;
       case EndpointTypesEnum.UPDATE:
+        return `{${columnVals.map((arg) => arg.name).join(',\n')}}`;
       case EndpointTypesEnum.CREATE:
-        return `{${columnVals.map((arg) => arg.name)}}`;
+        return `{${columnVals
+          .map((arg) => arg.name)
+          .filter((arg) => !this.argOmissionOnCreate.includes(arg))
+          .join(',\n')}}`;
       case EndpointTypesEnum.DELETE:
       case ReadEndpointTypes.ID:
         return `id`;

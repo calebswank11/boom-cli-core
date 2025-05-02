@@ -1,4 +1,19 @@
-export const utilsTemplate = `
+import { LibrariesEnum, Library, ORM, ORMEnum } from '../../@types';
+
+export const utilsTemplate = (orm: ORM) => {
+  switch (orm) {
+    case ORMEnum.sequelize:
+      return sequelizeUtilsTemplate;
+      case ORMEnum.knex:
+        return knexUtilsTemplate;
+      case ORMEnum.prisma:
+        return prismaUtilsTemplate;
+      case ORMEnum.typeorm:
+        return typeORMUtilsTemplate;
+  }
+};
+
+const knexUtilsTemplate = `
 import type { Knex } from 'knex';
 import { getKnex } from '../database/connectToDB';
 
@@ -30,5 +45,26 @@ export async function runTransaction<T>(callback: (trx: Knex.Transaction) => Pro
     return undefined;
   }
 }
+`
 
+const sequelizeUtilsTemplate = `
+import {Transaction} from 'sequelize';
+import { getSequelize } from '../database/connectToDB';
+
+const sequelize = getSequelize() 
+
+export async function runTransaction<T>(fn: (trx: Transaction) => Promise<T>): Promise<T> {
+  const trx = await sequelize.transaction();
+  try {
+    const result = await fn(trx);
+    await trx.commit();
+    return result;
+  } catch (error) {
+    await trx.rollback();
+    throw error;
+  }
+}
 `;
+
+const prismaUtilsTemplate = ``;
+const typeORMUtilsTemplate = ``;

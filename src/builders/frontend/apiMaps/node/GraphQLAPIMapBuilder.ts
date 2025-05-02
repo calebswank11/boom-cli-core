@@ -108,7 +108,7 @@ export class GraphQLAPIMapBuilder {
             // adds defaults as well as removes them if they're included for some reasosn
             return [
               ...new Set([
-                'uuid',
+                'id',
                 ...Object.values(typescriptType.values).map((value) => value.name),
                 'created_at',
                 'updated_at',

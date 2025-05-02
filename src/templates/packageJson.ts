@@ -1,4 +1,4 @@
-import { ORMEnum, PackageRegistryBase } from '../@types';
+import { APIType, ORMEnum, PackageRegistryBase } from '../@types';
 import { ConfigRegistry } from '../registries';
 
 export const packageRegistryTemplate = (
@@ -21,8 +21,7 @@ export const packageRegistryTemplate = (
   const dependencies = {
     ...dependenciesConfig.general,
     ...dependenciesConfig.library.general,
-    // TODO hook up express as an option
-    ...dependenciesConfig.api.type['graphql'],
+    ...dependenciesConfig.api.type[config.apiType as APIType],
     ...dependenciesConfig.orm.general,
     ...dependenciesConfig.orm[config.orm as ORMEnum],
   };
@@ -78,19 +77,19 @@ export const packageRegistryTemplate = (
     "author": "",
     "license": "${config.project.license}",
     "scripts": {
-      ${Object.keys(scripts)
-        .map((key) => `"${key}": "${scripts[key]}"`)
-        .join(',')}
+      ${Object.entries(scripts)
+        .map(([key, value]) => `"${key}": "${value}"`)
+        .join(',\n      ')}
     },
     "dependencies": {
-    ${Object.keys(dependencies)
-      .map((key) => `"${key}": "${dependencies[key]}"`)
-      .join(',')}
+      ${Object.entries(dependencies)
+        .map(([key, value]) => `"${key}": "${value}"`)
+        .join(',\n      ')}
     },
     "devDependencies": {
-      ${Object.keys(devDependencies)
-        .map((key) => `"${key}": "${devDependencies[key]}"`)
-        .join(',')}
+      ${Object.entries(devDependencies)
+        .map(([key, value]) => `"${key}": "${value}"`)
+        .join(',\n      ')}
     }
   }
   `;

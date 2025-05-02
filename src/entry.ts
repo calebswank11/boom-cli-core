@@ -1,9 +1,7 @@
 import dotenv from 'dotenv';
+import { rm } from 'fs/promises';
+import path from 'path';
 import { ScaffoldingConfig } from './@types';
-import { ConfigRegistry } from './registries';
-import { TreeStructureManager } from './controllers/directoryTools/TreeStructureManager';
-import { TreeCreator } from './controllers/directoryTools/TreeCreator';
-import { ProcessSqlController } from './controllers/directoryTools/ProcessSqlController';
 import {
   BackendOrchestrator,
   CICDOrchestrator,
@@ -12,15 +10,28 @@ import {
   EnumsOrchestrator,
   FrontendOrchestrator,
 } from './_starters';
-import { logBreak, logBSInfo, logFinish, logLogo } from './utils/logs';
+import { ProcessSqlController } from './controllers/directoryTools/ProcessSqlController';
+import { TreeCreator } from './controllers/directoryTools/TreeCreator';
+import { TreeStructureManager } from './controllers/directoryTools/TreeStructureManager';
+import { ConfigRegistry } from './registries';
+import { logBreak, logBSInfo, logFinish, logNotes } from './utils/logs';
 
 dotenv.config();
+
+const originalLog = console.log;
+
+console.log = (...args: any[]) => {
+  originalLog(
+    ...args.map((arg) =>
+      typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg,
+    ),
+  );
+};
 
 const configRegistry = ConfigRegistry.getConfigInstance();
 
 export const boomScaffold = async (config: ScaffoldingConfig) => {
   try {
-    logLogo();
     if (process.env.NODE_ENV !== 'production') {
       console.time('B!S completion time');
     }
@@ -35,7 +46,6 @@ export const boomScaffold = async (config: ScaffoldingConfig) => {
     await processSqlController.processFiles();
 
     const tableStructure = processSqlController.getStructure();
-
     const dataOrchestrator = new DataOrchestrator(config, tableStructure);
     dataOrchestrator.extractData();
 
@@ -50,6 +60,7 @@ export const boomScaffold = async (config: ScaffoldingConfig) => {
     await frontendOrchestrator.scaffold();
     await cicdOrchestrator.scaffold();
     await cloudOpsOrchestrator.scaffold();
+
     logBreak();
     logBreak();
     if (process.env.NODE_ENV !== 'production') {
@@ -58,11 +69,15 @@ export const boomScaffold = async (config: ScaffoldingConfig) => {
     logBreak();
     logBSInfo();
     logBreak();
+    logNotes(config);
     logFinish();
-    // NOTE delete existing files for cleanup?
+    // remove data registry files that are used in case of crash
+    await rm(path.join(config.srcRoot, 'data', 'registryData'), {
+      recursive: true,
+      force: true,
+    });
   } catch (error) {
-    console.error('');
-    console.error('Process was interrupted because of an error.');
+    console.error('⚠️ Process was interrupted because of an error.');
     console.error(error);
   }
 };

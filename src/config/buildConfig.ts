@@ -73,8 +73,10 @@ export const buildConfig = async (
           staging: false,
           prod: false,
         },
-        apis: { folder: 'src/resolvers', active: true },
-        typedefs: { folder: 'src/typedefs', active: true },
+        apis: { folder: `src/resolvers`, active: false },
+        typedefs: { folder: 'src/typedefs', active: false },
+        routes: { folder: 'src/routes', active: false },
+        models: { folder: 'src/models', active: false },
         helperFunctions: { folder: 'src/dataServices', active: true },
         tests: true,
       },
@@ -140,10 +142,31 @@ export const buildConfig = async (
   if (orm) {
     config.orm = orm;
     config.database.dialect = orm;
+    if (orm === ORMEnum.sequelize) {
+      config.outputs.api.seeds.folder = 'seeders';
+      config.outputs.api.models.active = true;
+    }
   }
 
   if (apiType) {
     config.apiType = apiType;
+    if (apiType === 'graphql') {
+      config.outputs.api.apis = {
+        folder: `${config.srcRoot}/resolvers`,
+        active: true,
+      };
+      config.outputs.api.typedefs.active = true;
+    } else {
+      // rest config
+      config.outputs.api.routes.active = true;
+      config.outputs.api.apis = {
+        folder: `${config.srcRoot}/controllers`,
+        active: true,
+      };
+    }
+  } else {
+    // default to graphql
+    config.outputs.api.typedefs.active = true;
   }
 
   if (library) {
@@ -185,6 +208,8 @@ export const buildConfig = async (
       }
     }
   }
+
+  console.log('config', config);
 
   if (infra) {
     // manage infra here

@@ -6,6 +6,9 @@ export const defaultTableData: {
   defaultColumns: {
     id: {
       name: 'id',
+      pascalCase: 'id',
+      camelCase: 'id',
+      capSentenceCase: 'ID',
       autoIncrement: false,
       type: {
         name: SqlDataType.UUID,
@@ -16,6 +19,9 @@ export const defaultTableData: {
     },
     created_at: {
       name: 'created_at',
+      pascalCase: 'CreatedAt',
+      camelCase: 'createdAt',
+      capSentenceCase: 'Created At',
       autoIncrement: false,
       type: {
         name: SqlDataType.TIMESTAMP,
@@ -27,6 +33,9 @@ export const defaultTableData: {
     },
     updated_at: {
       name: 'updated_at',
+      pascalCase: 'UpdateAt',
+      camelCase: 'updatedAt',
+      capSentenceCase: 'Updated At',
       autoIncrement: false,
       type: {
         name: SqlDataType.TIMESTAMP,
@@ -38,6 +47,9 @@ export const defaultTableData: {
     },
     deleted_at: {
       name: 'deleted_at',
+      pascalCase: 'DeletedAt',
+      camelCase: 'deletedAt',
+      capSentenceCase: 'Deleted At',
       autoIncrement: false,
       type: {
         name: SqlDataType.TIMESTAMP,
