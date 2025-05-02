@@ -1,15 +1,19 @@
-export const restExpressTemplate = `
-import express from 'express';
-import cors from 'cors';
-import path from 'path';
-import dotenv from 'dotenv';
+export const knexRestExpressTemplate = () =>
+  restExpressTemplate({
+    imports: `import Knex from 'knex';
+import knexConfig from '../knexfile';`,
+    initializeOrm: `// Initialize Knex
+const knex = Knex(knexConfig[process.env.NODE_ENV || 'development']);`,
+    serverHelpers: ``,
+  });
+
+export const sequelizeRestExpressTemplate = () =>
+  restExpressTemplate({
+    imports: `
 import { Sequelize } from 'sequelize';
-import routes from './routes';
 import { initializeModels } from './models';
-
-// Determine environment
-const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
-
+`,
+    initializeOrm: `
 // Initialize Sequelize
 const sequelize = new Sequelize(
   process.env.DB_NAME || 'database',
@@ -21,6 +25,36 @@ const sequelize = new Sequelize(
     logging: isDevelopment ? console.log : false,
   }
 );
+
+`,
+    serverHelpers: `
+const modelsInitialized = await initializeModels();
+if (!modelsInitialized) {
+  throw new Error('Failed to initialize models');
+}
+`,
+  });
+
+export const restExpressTemplate = ({
+  imports,
+  initializeOrm,
+  serverHelpers,
+}: {
+  imports: string;
+  initializeOrm: string;
+  serverHelpers: string;
+}) => `
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import dotenv from 'dotenv';
+import routes from './routes';
+${imports}
+
+// Determine environment
+const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+
+${initializeOrm}
 
 // Initialize Express
 const app = express();
@@ -50,11 +84,7 @@ const PORT = process.env.PORT || 4000;
 // Initialize models and start server
 const startServer = async () => {
   try {
-    // Initialize models
-    const modelsInitialized = await initializeModels();
-    if (!modelsInitialized) {
-      throw new Error('Failed to initialize models');
-    }
+    ${serverHelpers}
 
     // Start the server
     app.listen(PORT, () => {

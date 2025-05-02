@@ -22,7 +22,7 @@ export const findByIdSequelizeTemplate = (
   functionName: string,
 ): string => {
   return `
-    export const ${functionName} = async (id: string): Promise<${api.responseType} | undefined> => {
+    export const ${functionName} = async (id: string): Promise<Omit<${api.responseType}, 'id' | 'created_at' | 'updated_at' | 'deleted_at'> | undefined> => {
       try {
         const result = await ${snakeToPascalCase(api.tableName)}Model.findOne({where: {id}});
         return result ? (result as unknown as ${api.responseType}) : undefined;

@@ -179,7 +179,7 @@ export class TreeStructureManager {
   }
 
   getModelStructure() {
-    if (this.config.apiType === 'rest') {
+    if (this.config.orm === ORMEnum.sequelize) {
       return {
         root: this.withRoot(this.config.outputs.api.models.folder),
         files: {

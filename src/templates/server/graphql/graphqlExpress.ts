@@ -1,13 +1,56 @@
-export const graphqlExpressTemplate = `
+export const sequelizeGraphqlTemplate = () =>
+  graphqlExpressTemplate({
+    imports: `
+  import { Sequelize } from 'sequelize';
+  import { initializeModels } from './models';
+  `,
+    initializeOrm: `
+  // Initialize Sequelize
+  const sequelize = new Sequelize(
+    process.env.DB_NAME || 'database',
+    process.env.DB_USER || 'user',
+    process.env.DB_PASSWORD || 'password',
+    {
+      host: process.env.DB_HOST || 'localhost',
+      dialect: (process.env.DB_DIALECT as 'postgres') || 'postgres',
+      logging: isDevelopment ? console.log : false,
+    }
+  );
+
+  `,
+    serverHelpers: `
+  const modelsInitialized = await initializeModels();
+  if (!modelsInitialized) {
+    throw new Error('Failed to initialize models');
+  }
+  `,
+  });
+
+export const knexGraphqlTemplate = () =>
+  graphqlExpressTemplate({
+    imports: `import Knex from 'knex';
+import knexConfig from '../knexfile';`,
+    initializeOrm: `// Initialize Knex
+const knex = Knex(knexConfig[process.env.NODE_ENV || 'development']);`,
+  });
+
+export const graphqlExpressTemplate = ({
+  imports,
+  initializeOrm,
+  serverHelpers,
+}: {
+  imports: string;
+  initializeOrm: string;
+  serverHelpers?: string;
+}) => `
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import dotenv from 'dotenv';
-import Knex from 'knex';
 import schema from './resolvers/schema';
-import knexConfig from '../knexfile';
+${imports}
 
 // Import Apollo Plugins
 const {
@@ -18,8 +61,7 @@ const {
 // Determine environment
 const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
 
-// Initialize Knex
-const knex = Knex(knexConfig[process.env.NODE_ENV || 'development']);
+${initializeOrm}
 
 // Production-specific Apollo configurations
 const prodConfig = isDevelopment ? {} : { cache: 'bounded' };
@@ -66,9 +108,15 @@ server.start().then(() => {
 
   // Start Server
   const PORT = process.env.PORT || 4000;
-  app.listen(PORT, () => {
-    console.log(\`🚀 Server running at http://localhost:\${PORT}/graphql\`);
-  });
+
+  const startServer = async () => {
+    ${serverHelpers || ''}
+    app.listen(PORT, () => {
+      console.log(\`🚀 Server running at http://localhost:\${PORT}/graphql\`);
+    });
+  }
+
+  startServer();
 });
 
 `;

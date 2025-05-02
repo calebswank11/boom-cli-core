@@ -144,6 +144,7 @@ export const buildConfig = async (
     config.database.dialect = orm;
     if (orm === ORMEnum.sequelize) {
       config.outputs.api.seeds.folder = 'seeders';
+      config.outputs.api.models.active = true;
     }
   }
 
@@ -162,7 +163,6 @@ export const buildConfig = async (
         folder: `${config.srcRoot}/controllers`,
         active: true,
       };
-      config.outputs.api.models.active = true;
     }
   } else {
     // default to graphql
@@ -208,6 +208,8 @@ export const buildConfig = async (
       }
     }
   }
+
+  console.log('config', config);
 
   if (infra) {
     // manage infra here

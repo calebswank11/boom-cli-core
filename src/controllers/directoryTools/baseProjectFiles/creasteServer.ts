@@ -1,7 +1,13 @@
-import { LibrariesEnum } from '../../../@types';
+import { LibrariesEnum, ORMEnum } from '../../../@types';
 import { ConfigRegistry } from '../../../registries';
-import { graphqlExpressTemplate } from '../../../templates/server/graphql/graphqlExpress';
-import { restExpressTemplate } from '../../../templates/server/rest/restExpress';
+import {
+  knexGraphqlTemplate,
+  sequelizeGraphqlTemplate,
+} from '../../../templates/server/graphql/graphqlExpress';
+import {
+  knexRestExpressTemplate,
+  sequelizeRestExpressTemplate,
+} from '../../../templates/server/rest/restExpress';
 import { restNestJSTemplate } from '../../../templates/server/rest/restNestJS';
 import { FileCreator } from '../FileCreator';
 
@@ -15,12 +21,30 @@ export const buildAndCreateServer = async () => {
   let serverTemplate = '';
 
   if (config.apiType === 'graphql') {
-    serverTemplate = graphqlExpressTemplate;
+    switch (config.orm) {
+      case ORMEnum.sequelize:
+        serverTemplate = sequelizeGraphqlTemplate();
+        break;
+      case ORMEnum.knex:
+        serverTemplate = knexGraphqlTemplate();
+        break;
+      default:
+        throw new Error(`Unsupported ORM: ${config.orm}`);
+    }
   } else {
     // For REST API
     switch (config.library) {
       case LibrariesEnum.express:
-        serverTemplate = restExpressTemplate;
+        switch (config.orm) {
+          case ORMEnum.sequelize:
+            serverTemplate = sequelizeRestExpressTemplate();
+            break;
+          case ORMEnum.knex:
+            serverTemplate = knexRestExpressTemplate();
+            break;
+          default:
+            throw new Error(`Unsupported ORM: ${config.orm}`);
+      }
         break;
       case LibrariesEnum.nestjs:
         serverTemplate = restNestJSTemplate;

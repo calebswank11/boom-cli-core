@@ -1,4 +1,6 @@
 import dotenv from 'dotenv';
+import { rm } from 'fs/promises';
+import path from 'path';
 import { ScaffoldingConfig } from './@types';
 import {
   BackendOrchestrator,
@@ -69,9 +71,13 @@ export const boomScaffold = async (config: ScaffoldingConfig) => {
     logBreak();
     logNotes(config);
     logFinish();
+    // remove data registry files that are used in case of crash
+    await rm(path.join(config.srcRoot, 'data', 'registryData'), {
+      recursive: true,
+      force: true,
+    });
   } catch (error) {
-    console.error('');
-    console.error('Process was interrupted because of an error.');
+    console.error('⚠️ Process was interrupted because of an error.');
     console.error(error);
   }
 };
